@@ -109,7 +109,9 @@ export async function pullFromCloud(userId: string): Promise<DB> {
   }
 
   const events: WatchEvent[] = [];
-  for (const row of (eventsRes.data ?? []) as (EventRow & { items: { media_type: string; tmdb_id: number } })[]) {
+  // Double cast — TS ne peut pas prouver la forme jointe de Supabase, on l'assume ici.
+  const rawEvents = (eventsRes.data ?? []) as unknown as (EventRow & { items: { media_type: string; tmdb_id: number } })[];
+  for (const row of rawEvents) {
     const localItemId = `${row.items.media_type}:${row.items.tmdb_id}`;
     events.push({
       id: row.id,
