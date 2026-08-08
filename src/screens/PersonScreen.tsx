@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, User } from 'lucide-react';
 import {
-  getPersonCombinedCredits, getPersonDetails, posterUrl, profileUrl,
+  getPersonCombinedCredits, getPersonDetails, profileUrl,
   type PersonCredit, type PersonDetails,
 } from '../api/tmdb';
 import { PosterCard } from '../components/PosterCard';
