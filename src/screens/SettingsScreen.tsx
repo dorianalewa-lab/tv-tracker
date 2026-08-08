@@ -198,6 +198,36 @@ export function SettingsScreen() {
             <LogOut size={16} /> Se déconnecter
           </button>
         </section>
+
+        {/* Attribution TMDB (obligatoire selon leurs conditions d'usage API) */}
+        <section className="pt-4 border-t border-border">
+          <div className="flex items-center gap-3">
+            {/* Logo officiel TMDB — SVG inline pour rester self-contained */}
+            <a
+              href="https://www.themoviedb.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="TMDB"
+              className="shrink-0"
+            >
+              <svg width="80" height="12" viewBox="0 0 190 27" xmlns="http://www.w3.org/2000/svg" fill="none">
+                <path d="M105.67 14.5c0-.98.19-1.87.55-2.68.36-.8.87-1.49 1.52-2.06.65-.57 1.42-1.02 2.31-1.34.89-.32 1.86-.48 2.9-.48s2.01.16 2.9.48c.89.32 1.66.77 2.31 1.34.65.57 1.16 1.26 1.52 2.06.36.81.55 1.7.55 2.68 0 .98-.19 1.87-.55 2.68-.36.8-.87 1.49-1.52 2.06-.65.57-1.42 1.02-2.31 1.34-.89.32-1.86.48-2.9.48s-2.01-.16-2.9-.48c-.89-.32-1.66-.77-2.31-1.34a5.97 5.97 0 0 1-1.52-2.06 6.55 6.55 0 0 1-.55-2.68z" fill="#01b4e4"/>
+                <text x="0" y="20" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#01b4e4">TMDB</text>
+              </svg>
+            </a>
+            <div className="text-[11px] text-muted leading-tight">
+              Les données de films, séries, images et vidéos sont fournies par{' '}
+              <a
+                href="https://www.themoviedb.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-accent underline"
+              >
+                The Movie Database
+              </a>. Cette app n'est pas affiliée à TMDB.
+            </div>
+          </div>
+        </section>
       </div>
 
       {saved && (
