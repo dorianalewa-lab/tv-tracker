@@ -21,7 +21,7 @@ export function WrappedScreen() {
 
   return (
     <div className="min-h-full bg-bg">
-      <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 glass-bar border-b">
+      <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-bg/95 backdrop-blur border-b border-border">
         <div className="text-sm font-medium flex items-center gap-2">
           <Sparkles size={16} className="text-accent" />
           Ta rétro · {PERIOD_LABELS[period]}

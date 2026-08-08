@@ -65,7 +65,7 @@ export function ProfileScreen() {
               onClick={() => setPeriod(p)}
               className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition ${
                 period === p
-                  ? 'bg-accent text-white border-accent font-medium'
+                  ? 'bg-accent text-black border-accent font-medium'
                   : 'border-border text-muted'
               }`}
             >
@@ -145,7 +145,7 @@ export function ProfileScreen() {
         <section>
           <h2 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">Ton activité (12 derniers mois)</h2>
           {stats.monthly.every((m) => m.count === 0) ? (
-            <div className="glass rounded-xl p-6 text-center text-sm text-muted">
+            <div className="bg-surface border border-border rounded-xl p-6 text-center text-sm text-muted">
               Aucune activité pour l'instant. Coche des épisodes ou marque des films comme vus pour voir apparaître ta timeline ici.
             </div>
           ) : (
@@ -181,7 +181,7 @@ export function ProfileScreen() {
             <h2 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">Ta série obsession</h2>
             <Link
               to={stats.mostBinged.item.mediaType === 'tv' ? `/show/${stats.mostBinged.item.tmdbId}` : `/movie/${stats.mostBinged.item.tmdbId}`}
-              className="flex items-center gap-3 p-3 rounded-xl glass"
+              className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border"
             >
               <div className="w-14 h-20 rounded-md overflow-hidden bg-bg border border-border shrink-0">
                 {posterUrl(stats.mostBinged.item.posterPath, 'w154') && (
@@ -263,7 +263,7 @@ export function ProfileScreen() {
         {!isEmpty && (
           <Link
             to={`/wrapped?p=${period}`}
-            className="block w-full text-center py-4 rounded-xl bg-gradient-to-br from-accent to-accent-strong text-white font-semibold shadow-lg active:scale-[0.98] transition"
+            className="block w-full text-center py-4 rounded-xl bg-gradient-to-br from-accent to-yellow-500 text-black font-semibold shadow-lg active:scale-[0.98] transition"
           >
             <div className="inline-flex items-center gap-2">
               <Sparkles size={18} />
@@ -278,7 +278,7 @@ export function ProfileScreen() {
 
 function MiniStat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="glass rounded-xl p-3 text-center">
+    <div className="bg-surface border border-border rounded-xl p-3 text-center">
       <div className="text-xl font-bold">{value}</div>
       <div className="text-[11px] text-muted mt-0.5">{label}</div>
     </div>

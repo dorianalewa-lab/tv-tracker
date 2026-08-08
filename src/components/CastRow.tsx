@@ -27,7 +27,7 @@ export function CastRow({ mediaType, tmdbId }: { mediaType: 'tv' | 'movie'; tmdb
             to={`/person/${m.id}`}
             className="w-20 shrink-0 text-center active:opacity-70"
           >
-            <div className="w-20 h-20 rounded-full overflow-hidden glass flex items-center justify-center">
+            <div className="w-20 h-20 rounded-full overflow-hidden bg-surface border border-border flex items-center justify-center">
               {profileUrl(m.profile_path, 'w185') ? (
                 <img src={profileUrl(m.profile_path, 'w185')!} alt="" className="w-full h-full object-cover" loading="lazy" />
               ) : (

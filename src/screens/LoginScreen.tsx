@@ -39,7 +39,7 @@ export function LoginScreen() {
     <div className="min-h-full flex flex-col items-center justify-center px-6 py-10">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-accent to-accent-strong flex items-center justify-center shadow-xl mb-4">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-accent to-yellow-500 flex items-center justify-center shadow-xl mb-4">
             <Film size={30} className="text-black" />
           </div>
           <h1 className="text-2xl font-bold">TV Tracker</h1>
@@ -47,7 +47,7 @@ export function LoginScreen() {
         </div>
 
         {status === 'sent' ? (
-          <div className="text-center glass rounded-2xl p-6">
+          <div className="text-center bg-surface border border-border rounded-2xl p-6">
             <div className="w-12 h-12 mx-auto rounded-full bg-accent/15 flex items-center justify-center mb-3">
               <Check size={24} className="text-accent" />
             </div>
@@ -84,7 +84,7 @@ export function LoginScreen() {
             </div>
 
             {/* Magic link email */}
-            <form onSubmit={handleSubmit} className="glass rounded-2xl p-5">
+            <form onSubmit={handleSubmit} className="bg-surface border border-border rounded-2xl p-5">
               <label className="text-xs text-muted uppercase tracking-wide">Ton email</label>
               <div className="relative mt-2">
                 <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
@@ -108,7 +108,7 @@ export function LoginScreen() {
               <button
                 type="submit"
                 disabled={status === 'sending' || !email.trim()}
-                className="mt-4 w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-accent text-white font-semibold text-sm disabled:opacity-50"
+                className="mt-4 w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-accent text-black font-semibold text-sm disabled:opacity-50"
               >
                 {status === 'sending'
                   ? <><Loader2 size={16} className="animate-spin" /> Envoi…</>

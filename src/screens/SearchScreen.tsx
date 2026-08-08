@@ -164,20 +164,20 @@ export function SearchScreen() {
 
   return (
     <div className="min-h-full pb-32">
-      <div className="sticky top-0 z-10 glass-bar border-b">
+      <div className="sticky top-0 z-10 bg-bg/95 backdrop-blur border-b border-border">
         {/* Toggle Séries/Films en haut — pilote tendances ET recherche */}
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Découvrir</h1>
           <div className="inline-flex rounded-full border border-border bg-surface p-0.5 text-sm">
             <button
               onClick={() => setMediaType('tv')}
-              className={`px-3 py-1 rounded-full ${mediaType === 'tv' ? 'bg-accent text-white font-medium' : 'text-muted'}`}
+              className={`px-3 py-1 rounded-full ${mediaType === 'tv' ? 'bg-accent text-black font-medium' : 'text-muted'}`}
             >
               📺 Séries
             </button>
             <button
               onClick={() => setMediaType('movie')}
-              className={`px-3 py-1 rounded-full ${mediaType === 'movie' ? 'bg-accent text-white font-medium' : 'text-muted'}`}
+              className={`px-3 py-1 rounded-full ${mediaType === 'movie' ? 'bg-accent text-black font-medium' : 'text-muted'}`}
             >
               🎬 Films
             </button>
@@ -194,7 +194,7 @@ export function SearchScreen() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={mediaType === 'tv' ? 'Chercher une série, un acteur…' : 'Chercher un film, un acteur…'}
-              className="w-full glass rounded-xl pl-10 pr-10 py-3 text-base outline-none focus:border-muted"
+              className="w-full bg-surface border border-border rounded-xl pl-10 pr-10 py-3 text-base outline-none focus:border-muted"
             />
             {query && (
               <button onClick={() => setQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted p-1.5" aria-label="Effacer">
@@ -205,7 +205,7 @@ export function SearchScreen() {
           <button
             onClick={() => setFiltersOpen(true)}
             className={`relative w-11 h-11 rounded-xl border flex items-center justify-center ${
-              filtersCount > 0 ? 'bg-accent text-white border-accent' : 'bg-surface border-border text-muted'
+              filtersCount > 0 ? 'bg-accent text-black border-accent' : 'bg-surface border-border text-muted'
             }`}
             aria-label="Filtres"
           >
@@ -283,7 +283,7 @@ export function SearchScreen() {
             <div className="px-4 mt-4 mb-6">
               <Link
                 to={`/catalog/${mediaType}`}
-                className="flex items-center gap-3 p-4 rounded-2xl glass active:bg-border/40 transition-colors"
+                className="flex items-center gap-3 p-4 rounded-2xl bg-surface border border-border active:bg-border/40 transition-colors"
               >
                 <div className="w-11 h-11 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center text-accent shrink-0">
                   <ListChecks size={22} />
@@ -347,7 +347,7 @@ export function SearchScreen() {
                 <Link
                   key={p.id}
                   to={`/person/${p.id}`}
-                  className="flex items-center gap-3 p-2 rounded-xl glass active:bg-border/40 transition-colors"
+                  className="flex items-center gap-3 p-2 rounded-xl bg-surface border border-border active:bg-border/40 transition-colors"
                 >
                   <div className="w-14 h-14 rounded-full overflow-hidden bg-bg border border-border shrink-0 flex items-center justify-center">
                     {profileUrl(p.profile_path, 'w185') ? (
@@ -375,7 +375,7 @@ export function SearchScreen() {
       {/* Bouton "Aide-moi" — texte compact pour tenir sur une ligne */}
       <Link
         to="/ask"
-        className="fixed left-1/2 -translate-x-1/2 z-30 inline-flex items-center gap-2 px-5 h-11 rounded-full bg-gradient-to-br from-accent to-accent-strong text-white font-semibold shadow-xl active:scale-95 transition whitespace-nowrap"
+        className="fixed left-1/2 -translate-x-1/2 z-30 inline-flex items-center gap-2 px-5 h-11 rounded-full bg-gradient-to-br from-accent to-yellow-500 text-black font-semibold shadow-xl active:scale-95 transition whitespace-nowrap"
         style={{ bottom: 'calc(env(safe-area-inset-bottom) + 76px)' }}
       >
         <Wand2 size={18} /> Aide-moi

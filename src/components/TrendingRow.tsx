@@ -39,7 +39,7 @@ export function TrendingRow({ title, items, viewAllHref }: Props) {
                 to={t === 'tv' ? `/show/${r.id}` : `/movie/${r.id}`}
                 className="w-28 shrink-0"
               >
-                <div className="w-28 aspect-[2/3] rounded-lg overflow-hidden glass">
+                <div className="w-28 aspect-[2/3] rounded-lg overflow-hidden bg-surface border border-border">
                   {posterUrl(r.poster_path, 'w342') ? (
                     <img src={posterUrl(r.poster_path, 'w342')!} alt="" className="w-full h-full object-cover" loading="lazy" />
                   ) : null}

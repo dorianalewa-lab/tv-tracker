@@ -75,7 +75,7 @@ export function MovieDetailScreen() {
 
       <div className="px-4 -mt-16 relative">
         <div className="flex gap-3 items-end">
-          <div className="w-24 sm:w-28 aspect-[2/3] rounded-xl overflow-hidden glass shrink-0 shadow-xl">
+          <div className="w-24 sm:w-28 aspect-[2/3] rounded-xl overflow-hidden bg-surface border border-border shrink-0 shadow-xl">
             {posterUrl(details.poster_path) ? (
               <img src={posterUrl(details.poster_path)!} alt="" className="w-full h-full object-cover" />
             ) : null}
@@ -95,7 +95,7 @@ export function MovieDetailScreen() {
         {details.genres.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5">
             {details.genres.map((g) => (
-              <span key={g.id} className="text-[11px] px-2 py-0.5 rounded-full glass text-muted">
+              <span key={g.id} className="text-[11px] px-2 py-0.5 rounded-full bg-surface border border-border text-muted">
                 {g.name}
               </span>
             ))}
@@ -114,7 +114,7 @@ export function MovieDetailScreen() {
             className={`flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition ${
               seen
                 ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-300'
-                : 'bg-accent text-white'
+                : 'bg-accent text-black'
             }`}
           >
             <Check size={18} strokeWidth={seen ? 3 : 2} />

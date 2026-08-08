@@ -187,7 +187,7 @@ export function AskScreen() {
 
   return (
     <div className="min-h-full pb-24 flex flex-col">
-      <div className="sticky top-0 z-10 glass-bar border-b">
+      <div className="sticky top-0 z-10 bg-bg/95 backdrop-blur border-b border-border">
         <div className="px-4 pt-4 pb-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             {stepIdx > 0 && !done ? (
@@ -285,7 +285,7 @@ export function AskScreen() {
                 </div>
                 <button
                   onClick={handlePlatforms}
-                  className="w-full py-2.5 rounded-lg bg-accent text-white text-sm font-medium"
+                  className="w-full py-2.5 rounded-lg bg-accent text-black text-sm font-medium"
                 >
                   {pickedProviders.length > 0 ? `Valider (${pickedProviders.length})` : 'Passer'}
                 </button>
@@ -328,7 +328,7 @@ export function AskScreen() {
                         <Link
                           key={`${mt}:${r.id}`}
                           to={mt === 'tv' ? `/show/${r.id}` : `/movie/${r.id}`}
-                          className="flex gap-3 p-2 rounded-xl glass active:bg-border/40 transition-colors"
+                          className="flex gap-3 p-2 rounded-xl bg-surface border border-border active:bg-border/40 transition-colors"
                         >
                           <div className="w-16 h-24 shrink-0 rounded-md overflow-hidden bg-bg border border-border">
                             {posterUrl(r.poster_path, 'w154') ? (
@@ -371,8 +371,8 @@ function Bubble({ who, children }: { who: 'bot' | 'user'; children: React.ReactN
       <div
         className={`max-w-[85%] px-3.5 py-2.5 text-sm rounded-2xl ${
           isBot
-            ? 'glass text-text rounded-bl-sm'
-            : 'bg-accent text-white rounded-br-sm font-medium'
+            ? 'bg-surface border border-border text-text rounded-bl-sm'
+            : 'bg-accent text-black rounded-br-sm font-medium'
         }`}
       >
         {children}

@@ -4,17 +4,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: '#0a0812',
-        surface: '#16121e',
-        border: 'rgba(255,255,255,0.08)',
+        bg: '#0b0d10',
+        surface: '#15181d',
+        border: '#242830',
         text: '#f5f5f7',
-        muted: '#9ea0b5',
-        // Violet pastel — palette Liquid Glass
-        accent: '#a78bfa',
-        'accent-strong': '#8b5cf6',
-      },
-      backdropBlur: {
-        xs: '4px',
+        muted: '#8b93a0',
+        accent: '#f5c518',
       },
     },
   },
