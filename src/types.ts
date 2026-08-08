@@ -34,6 +34,8 @@ export type WatchEvent = {
 export type Profile = {
   displayName: string;
   emoji?: string;
+  avatarUrl?: string | null;    // URL TMDB (poster de film choisi)
+  bannerUrl?: string | null;    // URL TMDB (backdrop de film choisi)
   region: string;
   providers: number[];
 };

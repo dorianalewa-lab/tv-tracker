@@ -128,6 +128,8 @@ export async function pullFromCloud(userId: string): Promise<DB> {
     ? {
         displayName: profileData.display_name ?? 'Toi',
         emoji: profileData.emoji ?? '🎬',
+        avatarUrl: profileData.avatar_url ?? null,
+        bannerUrl: profileData.banner_url ?? null,
         region: profileData.region ?? 'CH',
         providers: profileData.providers ?? [],
       }
@@ -165,6 +167,8 @@ async function pushNow() {
       id: userId,
       display_name: db.profile.displayName,
       emoji: db.profile.emoji ?? '🎬',
+      avatar_url: db.profile.avatarUrl ?? null,
+      banner_url: db.profile.bannerUrl ?? null,
       region: db.profile.region,
       providers: db.profile.providers,
       updated_at: new Date().toISOString(),

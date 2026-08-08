@@ -11,7 +11,7 @@ import {
 import { useDB } from '../hooks/useLibrary';
 import {
   ensureItemFromDetails, episodeKey, markAllEpisodesSeen, markEpisodeSeen,
-  resetTvProgress, setRating, toggleSaved, unmarkEpisodeSeen,
+  removeItem, resetTvProgress, setRating, unmarkEpisodeSeen,
 } from '../storage/library';
 import { StarRating } from '../components/StarRating';
 import { WatchProviders } from '../components/WatchProviders';
@@ -136,35 +136,38 @@ export function ShowDetailScreen() {
           </div>
         )}
 
-        {/* Actions : Marquer vue + Enregistrer. Statut auto-dérivé, aucun choix manuel. */}
+        {/* Actions : Marquer comme vu + Enregistrer */}
         <div className="mt-4 flex items-center gap-2">
           <button
             onClick={toggleAllSeen}
             disabled={markingAll}
-            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-accent text-black font-semibold text-sm disabled:opacity-70"
+            className={`flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition disabled:opacity-70 ${
+              isCompleted
+                ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-300'
+                : 'bg-accent text-black'
+            }`}
           >
             {markingAll ? (
               <><Loader2 size={16} className="animate-spin" /> Marquage…</>
             ) : isCompleted ? (
-              <><Check size={18} strokeWidth={3} /> Terminée</>
+              <><Check size={18} strokeWidth={3} /> Vue</>
             ) : (
-              <><Check size={18} /> Marquer vue</>
+              <><Check size={18} /> Marquer comme vu</>
             )}
           </button>
           <BookmarkButton
-            active={item?.saved ?? false}
+            active={!!item}
             onClick={() => {
-              const id = ensure();
-              if (id) toggleSaved(id);
+              if (item) {
+                if (confirm(`Retirer "${details.name}" de ta biblio ?`)) {
+                  removeItem(item.id);
+                }
+              } else {
+                ensure();
+              }
             }}
           />
         </div>
-
-        {item && (
-          <div className="mt-2 text-[11px] text-muted">
-            Statut auto : <span className="text-text">{labelOf(item.status)}</span>
-          </div>
-        )}
 
         {item && (
           <div className="mt-5">
@@ -404,10 +407,6 @@ function BackButton({ to, floating }: { to: string; floating?: boolean }) {
       {!floating && 'Retour'}
     </Link>
   );
-}
-
-function labelOf(s: 'planned' | 'watching' | 'completed' | 'dropped'): string {
-  return { planned: 'À voir', watching: 'En cours', completed: 'Terminé', dropped: 'Abandonné' }[s];
 }
 
 function formatDate(iso: string | null): string {

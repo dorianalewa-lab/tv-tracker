@@ -6,7 +6,7 @@ import {
 } from '../api/tmdb';
 import { useDB } from '../hooks/useLibrary';
 import {
-  ensureItemFromDetails, markMovieSeen, setRating, toggleSaved, unmarkMovieSeen,
+  ensureItemFromDetails, markMovieSeen, removeItem, setRating, unmarkMovieSeen,
 } from '../storage/library';
 import { StarRating } from '../components/StarRating';
 import { WatchProviders } from '../components/WatchProviders';
@@ -102,7 +102,7 @@ export function MovieDetailScreen() {
           </div>
         )}
 
-        {/* Actions : Marquer vu + Enregistrer. Statut auto. */}
+        {/* Actions : Marquer comme vu + Enregistrer */}
         <div className="mt-4 flex items-center gap-2">
           <button
             onClick={() => {
@@ -111,25 +111,28 @@ export function MovieDetailScreen() {
               if (seen) unmarkMovieSeen(id);
               else markMovieSeen(id);
             }}
-            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-accent text-black font-semibold text-sm"
+            className={`flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition ${
+              seen
+                ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-300'
+                : 'bg-accent text-black'
+            }`}
           >
             <Check size={18} strokeWidth={seen ? 3 : 2} />
-            {seen ? 'Vu' : 'Marquer vu'}
+            {seen ? 'Vu' : 'Marquer comme vu'}
           </button>
           <BookmarkButton
-            active={item?.saved ?? false}
+            active={!!item}
             onClick={() => {
-              const id = ensure();
-              if (id) toggleSaved(id);
+              if (item) {
+                if (confirm(`Retirer "${details.title}" de ta biblio ?`)) {
+                  removeItem(item.id);
+                }
+              } else {
+                ensure();
+              }
             }}
           />
         </div>
-
-        {item && (
-          <div className="mt-2 text-[11px] text-muted">
-            Statut auto : <span className="text-text">{labelOf(item.status)}</span>
-          </div>
-        )}
 
         {item && (seen || item.rating != null) && (
           <div className="mt-5">
@@ -181,6 +184,3 @@ function BackButton({ to, floating }: { to: string; floating?: boolean }) {
   );
 }
 
-function labelOf(s: 'planned' | 'watching' | 'completed' | 'dropped'): string {
-  return { planned: 'À voir', watching: 'En cours', completed: 'Terminé', dropped: 'Abandonné' }[s];
-}

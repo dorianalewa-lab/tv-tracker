@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Sparkles, ArrowRight, Trophy, Settings, Users } from 'lucide-react';
 import { useDB } from '../hooks/useLibrary';
 import { computeStats, formatHours, PERIOD_LABELS, type Period } from '../lib/stats';
-import { computeBadges, computeLevel } from '../lib/badges';
+import { computeBadges, computeLevel, TIER_META, type BadgeTier } from '../lib/badges';
 import { posterUrl } from '../api/tmdb';
 
 const PERIODS: Period[] = ['year', '30d', 'all'];
@@ -25,27 +25,42 @@ export function ProfileScreen() {
     <div className="min-h-full pb-24">
       {/* Bannière profil */}
       <div className="relative">
-        <div className="h-32 bg-gradient-to-br from-accent/40 via-purple-600/20 to-bg" />
+        <div
+          className="h-40 bg-cover bg-center"
+          style={{
+            backgroundImage: db.profile.bannerUrl
+              ? `url(${db.profile.bannerUrl})`
+              : undefined,
+            background: db.profile.bannerUrl
+              ? undefined
+              : 'linear-gradient(135deg, rgba(245,197,24,0.4), rgba(147,51,234,0.2), var(--tw-bg))',
+          }}
+        />
+        {db.profile.bannerUrl && (
+          <div className="absolute inset-0 h-40 bg-gradient-to-b from-black/20 via-transparent to-bg" />
+        )}
         <div className="absolute top-3 right-3 flex gap-2">
           <Link
             to="/friends"
             aria-label="Amis"
-            className="w-10 h-10 rounded-full bg-black/40 backdrop-blur flex items-center justify-center text-white hover:bg-black/60"
+            className="w-10 h-10 rounded-full bg-black/50 backdrop-blur flex items-center justify-center text-white hover:bg-black/70"
           >
             <Users size={20} />
           </Link>
           <Link
             to="/settings"
             aria-label="Paramètres"
-            className="w-10 h-10 rounded-full bg-black/40 backdrop-blur flex items-center justify-center text-white hover:bg-black/60"
+            className="w-10 h-10 rounded-full bg-black/50 backdrop-blur flex items-center justify-center text-white hover:bg-black/70"
           >
             <Settings size={20} />
           </Link>
         </div>
 
         <div className="px-4 -mt-12 flex items-end gap-3">
-          <div className="w-20 h-20 rounded-full bg-surface border-4 border-bg flex items-center justify-center text-4xl shadow-xl shrink-0">
-            {db.profile.emoji ?? '🎬'}
+          <div className="w-20 h-20 rounded-full bg-surface border-4 border-bg overflow-hidden flex items-center justify-center text-4xl shadow-xl shrink-0">
+            {db.profile.avatarUrl
+              ? <img src={db.profile.avatarUrl} alt="" className="w-full h-full object-cover" />
+              : (db.profile.emoji ?? '🎬')}
           </div>
           <div className="pb-2 min-w-0 flex-1">
             <h1 className="text-xl font-bold leading-tight truncate">{db.profile.displayName}</h1>
@@ -142,33 +157,39 @@ export function ProfileScreen() {
           </section>
         )}
 
-        {!isEmpty && (
-          <section>
-            <h2 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">Ton activité (12 derniers mois)</h2>
-            <div className="flex items-end gap-1.5 h-32">
-              {stats.monthly.map((m, i) => {
-                const isBest = stats.bestMonth?.month === m.month && m.count > 0;
-                return (
-                  <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
-                    <div
-                      className={`w-full rounded-t-md transition-all ${
-                        m.count === 0 ? 'bg-surface' : isBest ? 'bg-accent' : 'bg-accent/50'
-                      }`}
-                      style={{ height: `${Math.max(4, (m.count / maxMonthly) * 100)}%` }}
-                      title={`${m.count} événements`}
-                    />
-                    <div className={`text-[10px] ${i % 2 === 0 ? 'text-muted' : 'text-muted/60'}`}>{m.label}</div>
-                  </div>
-                );
-              })}
+        <section>
+          <h2 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">Ton activité (12 derniers mois)</h2>
+          {stats.monthly.every((m) => m.count === 0) ? (
+            <div className="bg-surface border border-border rounded-xl p-6 text-center text-sm text-muted">
+              Aucune activité pour l'instant. Coche des épisodes ou marque des films comme vus pour voir apparaître ta timeline ici.
             </div>
-            {stats.bestMonth && stats.bestMonth.count > 0 && (
-              <div className="mt-2 text-xs text-muted">
-                Mois record : <span className="text-accent font-medium">{stats.bestMonth.label}</span> · {stats.bestMonth.count} épisodes
+          ) : (
+            <>
+              <div className="flex items-end gap-1.5 h-32 bg-surface/40 rounded-lg p-2">
+                {stats.monthly.map((m, i) => {
+                  const isBest = stats.bestMonth?.month === m.month && m.count > 0;
+                  return (
+                    <div key={m.month} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+                      <div
+                        className={`w-full rounded-t-md transition-all min-h-[3px] ${
+                          m.count === 0 ? 'bg-border/40' : isBest ? 'bg-accent' : 'bg-accent/50'
+                        }`}
+                        style={{ height: `${Math.max(3, (m.count / maxMonthly) * 100)}%` }}
+                        title={`${m.count} événements`}
+                      />
+                      <div className={`text-[10px] ${i % 2 === 0 ? 'text-muted' : 'text-muted/60'}`}>{m.label}</div>
+                    </div>
+                  );
+                })}
               </div>
-            )}
-          </section>
-        )}
+              {stats.bestMonth && stats.bestMonth.count > 0 && (
+                <div className="mt-2 text-xs text-muted">
+                  Mois record : <span className="text-accent font-medium">{stats.bestMonth.label}</span> · {stats.bestMonth.count} épisodes
+                </div>
+              )}
+            </>
+          )}
+        </section>
 
         {stats.mostBinged && (
           <section>
@@ -201,26 +222,56 @@ export function ProfileScreen() {
               </span>
             )}
           </h2>
-          <div className="grid grid-cols-2 gap-2">
-            {badges.map((b) => (
-              <div key={b.id} className={`p-3 rounded-xl border ${b.unlocked ? 'bg-surface border-accent/40' : 'bg-surface/50 border-border opacity-70'}`}>
-                <div className="flex items-start gap-2">
-                  <div className={`text-2xl ${b.unlocked ? '' : 'grayscale opacity-50'}`}>{b.emoji}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium">{b.label}</div>
-                    <div className="text-[11px] text-muted leading-tight mt-0.5">{b.description}</div>
-                    {!b.unlocked && b.progress && (
-                      <div className="mt-1.5">
-                        <div className="h-1 bg-bg rounded-full overflow-hidden">
-                          <div className="h-full bg-accent/60" style={{ width: `${(b.progress.current / b.progress.target) * 100}%` }} />
+          <div className="space-y-4">
+            {(['bronze', 'silver', 'gold', 'platinum'] as BadgeTier[]).map((tier) => {
+              const tierBadges = badges.filter((b) => b.tier === tier);
+              const meta = TIER_META[tier];
+              const unlockedInTier = tierBadges.filter((b) => b.unlocked).length;
+              return (
+                <div key={tier}>
+                  <div className={`flex items-center gap-2 mb-2 ${meta.textClass}`}>
+                    <span className="text-xs font-semibold uppercase tracking-widest">{meta.label}</span>
+                    <span className="text-[11px] text-muted">{unlockedInTier} / {tierBadges.length}</span>
+                    <div className="flex-1 h-px" style={{ background: `linear-gradient(to right, ${meta.color}55, transparent)` }} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {tierBadges.map((b) => (
+                      <div
+                        key={b.id}
+                        className={`p-3 rounded-xl border ${
+                          b.unlocked
+                            ? `${meta.bgClass} ${meta.borderClass}`
+                            : 'bg-surface/40 border-border opacity-60'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className={`text-2xl ${b.unlocked ? '' : 'grayscale opacity-50'}`}>{b.emoji}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium">{b.label}</div>
+                            <div className="text-[11px] text-muted leading-tight mt-0.5">{b.description}</div>
+                            {!b.unlocked && b.progress && (
+                              <div className="mt-1.5">
+                                <div className="h-1 bg-bg rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full"
+                                    style={{
+                                      width: `${(b.progress.current / b.progress.target) * 100}%`,
+                                      background: meta.color,
+                                      opacity: 0.7,
+                                    }}
+                                  />
+                                </div>
+                                <div className="text-[10px] text-muted mt-0.5">{b.progress.current} / {b.progress.target}</div>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-[10px] text-muted mt-0.5">{b.progress.current} / {b.progress.target}</div>
                       </div>
-                    )}
+                    ))}
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 

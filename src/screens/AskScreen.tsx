@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, RotateCcw, Sparkles, ArrowRight } from 'lucide-react';
+import { Loader2, RotateCcw, Sparkles, ArrowRight, ChevronLeft } from 'lucide-react';
 import {
   MOOD_OPTIONS, TIME_OPTIONS, FORMAT_OPTIONS, SAFETY_OPTIONS,
   buildDiscoverParams, summarizeConversation,
@@ -14,9 +14,9 @@ import { useDB } from '../hooks/useLibrary';
 import { updateProfile } from '../storage/library';
 import { computeProfile } from '../lib/recommendations';
 
-type StepKey = 'mood' | 'time' | 'format' | 'platforms' | 'genres' | 'safety';
-const STEP_ORDER_FULL: StepKey[] = ['mood', 'time', 'format', 'platforms', 'genres', 'safety'];
-const STEP_ORDER_NO_PLATFORMS: StepKey[] = ['mood', 'time', 'format', 'genres', 'safety'];
+type StepKey = 'mood' | 'time' | 'format' | 'platforms' | 'safety';
+const STEP_ORDER_FULL:         StepKey[] = ['mood', 'time', 'format', 'platforms', 'safety'];
+const STEP_ORDER_NO_PLATFORMS: StepKey[] = ['mood', 'time', 'format', 'safety'];
 
 type Turn =
   | { who: 'bot'; content: React.ReactNode; key: string }
@@ -34,8 +34,6 @@ export function AskScreen() {
   const [answers, setAnswers] = useState<Answers>({});
   const [stepIdx, setStepIdx] = useState(0);
   const [turns, setTurns] = useState<Turn[]>([]);
-  const [availableGenres, setAvailableGenres] = useState<string[] | null>(null);
-  const [pickedGenres, setPickedGenres] = useState<string[]>([]);
   const [availableProviders, setAvailableProviders] = useState<RegionProvider[] | null>(null);
   const [pickedProviders, setPickedProviders] = useState<number[]>([]);
   const [results, setResults] = useState<DiscoverResult[] | null>(null);
@@ -43,39 +41,25 @@ export function AskScreen() {
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Snapshot au mount : évite que STEP_ORDER change en cours de conv
-  // quand l'user valide ses plateformes (qui remplit `profile.providers`).
   const [hasProvidersInProfileAtMount] = useState(() => db.profile.providers.length > 0);
   const STEP_ORDER = hasProvidersInProfileAtMount ? STEP_ORDER_NO_PLATFORMS : STEP_ORDER_FULL;
   const currentStepKey = STEP_ORDER[stepIdx];
   const done = stepIdx >= STEP_ORDER.length;
 
-  // Message de bienvenue + première question
   useEffect(() => {
     if (turns.length === 0) {
       setTurns([
-        { who: 'bot', key: 'hello', content: 'Salut ! Je te pose 5 petites questions et je te propose ce qu\'il te faut ce soir 👇' },
-        { who: 'bot', key: 'q-mood', content: 'Ton mood ce soir ?' },
+        { who: 'bot', key: 'hello', content: 'Salut ! Je te pose quelques petites questions et je te propose ce qu\'il te faut 👇' },
+        { who: 'bot', key: 'q-mood', content: 'Ton mood aujourd\'hui ?' },
       ]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto-scroll à chaque nouveau turn
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [turns, results, loadingResults]);
 
-  // Charge la liste des genres FR quand on arrive à l'étape "genres"
-  useEffect(() => {
-    if (currentStepKey !== 'genres' || availableGenres) return;
-    Promise.all([getGenreMap('tv'), getGenreMap('movie')]).then(([tv, movie]) => {
-      const set = new Set<string>([...tv.keys(), ...movie.keys()]);
-      setAvailableGenres(Array.from(set).sort());
-    }).catch(() => setAvailableGenres([]));
-  }, [currentStepKey, availableGenres]);
-
-  // Charge la liste des providers quand on arrive à l'étape "platforms"
   useEffect(() => {
     if (currentStepKey !== 'platforms' || availableProviders) return;
     getProvidersForRegion(db.profile.region)
@@ -83,16 +67,32 @@ export function AskScreen() {
       .catch(() => setAvailableProviders([]));
   }, [currentStepKey, availableProviders, db.profile.region]);
 
-  function answer<K extends StepKey>(key: K, value: unknown, userLabel: string, nextBotPrompt?: string) {
+  function answer(key: StepKey, value: unknown, userLabel: string, nextBotPrompt?: string) {
     setAnswers((a) => ({ ...a, [key]: value }));
     setTurns((prev) => {
       const next: Turn[] = [...prev, { who: 'user', key: `u-${key}-${Date.now()}`, content: userLabel }];
-      if (nextBotPrompt) {
-        next.push({ who: 'bot', key: `b-${key}-next-${Date.now()}`, content: nextBotPrompt });
-      }
+      if (nextBotPrompt) next.push({ who: 'bot', key: `b-${key}-next-${Date.now()}`, content: nextBotPrompt });
       return next;
     });
     setStepIdx((i) => i + 1);
+  }
+
+  /** Revient d'une étape en arrière (retire les 2 derniers turns et décrémente stepIdx). */
+  function goBack() {
+    if (stepIdx === 0) return;
+    setStepIdx((i) => i - 1);
+    setTurns((prev) => {
+      // Retire les 2 derniers turns (user answer + bot next question)
+      const removed = prev.slice(0, -2);
+      return removed;
+    });
+    // On efface la réponse de l'étape précédente et la nouvelle courante pour re-demander proprement
+    const prevKey = STEP_ORDER[stepIdx - 1];
+    setAnswers((a) => {
+      const next = { ...a };
+      delete (next as Record<string, unknown>)[prevKey];
+      return next;
+    });
   }
 
   function handleMood(m: Mood) {
@@ -106,7 +106,7 @@ export function AskScreen() {
   function handleFormat(f: FormatChoice) {
     const opt = FORMAT_OPTIONS.find((o) => o.key === f)!;
     const nextPrompt = hasProvidersInProfileAtMount
-      ? 'Un genre en tête ? (facultatif, tu peux en cocher plusieurs ou passer)'
+      ? 'Plutôt valeur sûre ou découverte ?'
       : 'Sur quelles plateformes tu as accès ? Je m\'en souviendrai pour la prochaine fois.';
     answer('format', f, `${opt.emoji} ${opt.label}`, nextPrompt);
   }
@@ -118,13 +118,9 @@ export function AskScreen() {
     setTurns((prev) => [
       ...prev,
       { who: 'user', key: `u-platforms-${Date.now()}`, content: label },
-      { who: 'bot', key: `b-platforms-next-${Date.now()}`, content: 'Un genre en tête ? (facultatif, tu peux en cocher plusieurs ou passer)' },
+      { who: 'bot', key: `b-platforms-next-${Date.now()}`, content: 'Plutôt valeur sûre ou découverte ?' },
     ]);
     setStepIdx((i) => i + 1);
-  }
-  function handleGenres(skip: boolean) {
-    const label = skip || pickedGenres.length === 0 ? 'Peu importe' : pickedGenres.join(', ');
-    answer('genres', skip ? [] : pickedGenres, label, 'Dernière : plutôt valeur sûre ou découverte ?');
   }
   function handleSafety(s: Safety) {
     const opt = SAFETY_OPTIONS.find((o) => o.key === s)!;
@@ -137,7 +133,6 @@ export function AskScreen() {
     setStepIdx((i) => i + 1);
   }
 
-  // Lance la recherche quand toutes les réponses sont là
   useEffect(() => {
     if (!done || results !== null || loadingResults) return;
     (async () => {
@@ -167,9 +162,7 @@ export function AskScreen() {
 
         const arrays = await Promise.all(calls);
         let merged = arrays.flat();
-        // Exclut ce qui est déjà en biblio
         merged = merged.filter((r) => !ownedKeys.has(`${resolvedMediaType(r)}:${r.id}`));
-        // Mixe film/série équitablement + limite à 8
         merged = interleaveByType(merged).slice(0, 8);
         setResults(merged);
       } catch (e) {
@@ -178,26 +171,41 @@ export function AskScreen() {
         setLoadingResults(false);
       }
     })();
-  }, [done, results, loadingResults, answers, profile.topGenres, ownedKeys]);
+  }, [done, results, loadingResults, answers, profile.topGenres, ownedKeys, db.profile.providers, db.profile.region]);
 
   function restart() {
     setAnswers({});
     setStepIdx(0);
-    setPickedGenres([]);
+    setPickedProviders([]);
     setResults(null);
     setError(null);
     setTurns([
-      { who: 'bot', key: 'hello-2', content: 'On refait un tour ? Ton mood cette fois ?' },
+      { who: 'bot', key: 'hello-2', content: 'On refait un tour ? Ton mood aujourd\'hui ?' },
     ]);
   }
 
   return (
     <div className="min-h-full pb-24 flex flex-col">
       <div className="sticky top-0 z-10 bg-bg/95 backdrop-blur border-b border-border">
-        <div className="px-4 pt-4 pb-3 flex items-center justify-between">
+        <div className="px-4 pt-4 pb-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Sparkles size={18} className="text-accent" />
-            <h1 className="text-lg font-bold">Coach du soir</h1>
+            {stepIdx > 0 && !done ? (
+              <button
+                onClick={goBack}
+                className="p-2 -m-2 text-muted"
+                aria-label="Question précédente"
+              >
+                <ChevronLeft size={20} />
+              </button>
+            ) : (
+              <Link to="/" className="p-2 -m-2 text-muted" aria-label="Retour à Découvrir">
+                <ChevronLeft size={20} />
+              </Link>
+            )}
+            <div className="flex items-center gap-2">
+              <Sparkles size={18} className="text-accent" />
+              <h1 className="text-lg font-bold">Suggère-moi</h1>
+            </div>
           </div>
           {(stepIdx > 0 || results !== null) && (
             <button onClick={restart} className="text-xs text-muted flex items-center gap-1">
@@ -212,7 +220,6 @@ export function AskScreen() {
           <Bubble key={t.key} who={t.who}>{t.content}</Bubble>
         ))}
 
-        {/* Zone d'action selon l'étape courante */}
         {!done && currentStepKey === 'mood' && (
           <Choices>
             {MOOD_OPTIONS.map((o) => (
@@ -286,54 +293,6 @@ export function AskScreen() {
           </div>
         )}
 
-        {!done && currentStepKey === 'genres' && (
-          <div className="pt-1">
-            {!availableGenres ? (
-              <div className="text-muted text-sm">Chargement des genres…</div>
-            ) : (
-              <>
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                  {availableGenres.map((g) => {
-                    const active = pickedGenres.includes(g);
-                    return (
-                      <button
-                        key={g}
-                        onClick={() =>
-                          setPickedGenres((prev) =>
-                            active ? prev.filter((x) => x !== g) : [...prev, g]
-                          )
-                        }
-                        className={`text-xs px-3 py-1.5 rounded-full border transition ${
-                          active
-                            ? 'bg-accent text-black border-accent font-medium'
-                            : 'border-border text-muted'
-                        }`}
-                      >
-                        {g}
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleGenres(true)}
-                    className="flex-1 py-2.5 rounded-lg border border-border text-sm text-muted"
-                  >
-                    Passer
-                  </button>
-                  <button
-                    onClick={() => handleGenres(false)}
-                    disabled={pickedGenres.length === 0}
-                    className="flex-1 py-2.5 rounded-lg bg-accent text-black text-sm font-medium disabled:opacity-40"
-                  >
-                    Valider {pickedGenres.length > 0 && `(${pickedGenres.length})`}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
         {!done && currentStepKey === 'safety' && (
           <Choices>
             {SAFETY_OPTIONS.map((o) => (
@@ -342,7 +301,6 @@ export function AskScreen() {
           </Choices>
         )}
 
-        {/* Résultats */}
         {done && (
           <div className="pt-4">
             {loadingResults && (
@@ -385,9 +343,7 @@ export function AskScreen() {
                               )}
                             </div>
                             {r.overview && (
-                              <p className="mt-1 text-xs text-muted leading-snug line-clamp-2">
-                                {r.overview}
-                              </p>
+                              <p className="mt-1 text-xs text-muted leading-snug line-clamp-2">{r.overview}</p>
                             )}
                           </div>
                           <ArrowRight size={16} className="text-muted self-center shrink-0" />
@@ -406,8 +362,6 @@ export function AskScreen() {
     </div>
   );
 }
-
-/* ---------------- UI helpers ---------------- */
 
 function Bubble({ who, children }: { who: 'bot' | 'user'; children: React.ReactNode }) {
   const isBot = who === 'bot';
@@ -430,15 +384,7 @@ function Choices({ children }: { children: React.ReactNode }) {
   return <div className="flex flex-wrap gap-2 pt-1 pb-2">{children}</div>;
 }
 
-function Chip({
-  children,
-  onClick,
-  sub,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  sub?: string;
-}) {
+function Chip({ children, onClick, sub }: { children: React.ReactNode; onClick: () => void; sub?: string }) {
   return (
     <button
       onClick={onClick}
@@ -450,21 +396,15 @@ function Chip({
   );
 }
 
-/* ---------------- helpers ---------------- */
-
-// `discover` renvoie des items sans `media_type` — on l'ajoute au moment du fetch.
 function tag(mt: 'tv' | 'movie') {
   return (arr: DiscoverResult[]) => arr.map((r) => Object.assign(r, { __mt: mt }));
 }
 function resolvedMediaType(r: DiscoverResult): 'tv' | 'movie' {
-  // Champ interne ajouté par tag(). On check aussi les champs propres au type.
   const mt = (r as unknown as { __mt?: 'tv' | 'movie' }).__mt;
   if (mt) return mt;
   if (r.first_air_date != null || r.name != null) return 'tv';
   return 'movie';
 }
-
-/** Mixe les résultats film/série pour ne pas avoir toutes les séries en premier. */
 function interleaveByType(list: DiscoverResult[]): DiscoverResult[] {
   const tvs = list.filter((r) => resolvedMediaType(r) === 'tv');
   const movies = list.filter((r) => resolvedMediaType(r) === 'movie');
