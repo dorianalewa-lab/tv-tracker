@@ -6,7 +6,7 @@ import {
 } from '../api/tmdb';
 import { useDB } from '../hooks/useLibrary';
 import {
-  ensureItemFromDetails, markMovieSeen, removeItem, setRating, unmarkMovieSeen,
+  ensureItemFromDetails, markMovieSeen, setRating, toggleSaved, unmarkMovieSeen,
 } from '../storage/library';
 import { StarRating } from '../components/StarRating';
 import { WatchProviders } from '../components/WatchProviders';
@@ -121,15 +121,10 @@ export function MovieDetailScreen() {
             {seen ? 'Vu' : 'Marquer comme vu'}
           </button>
           <BookmarkButton
-            active={!!item}
+            active={!!item?.saved}
             onClick={() => {
-              if (item) {
-                if (confirm(`Retirer "${details.title}" de ta biblio ?`)) {
-                  removeItem(item.id);
-                }
-              } else {
-                ensure();
-              }
+              const id = ensure();
+              if (id) toggleSaved(id);
             }}
           />
         </div>

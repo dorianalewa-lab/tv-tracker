@@ -11,7 +11,7 @@ import {
 import { useDB } from '../hooks/useLibrary';
 import {
   ensureItemFromDetails, episodeKey, markAllEpisodesSeen, markEpisodeSeen,
-  removeItem, resetTvProgress, setRating, unmarkEpisodeSeen,
+  resetTvProgress, setRating, toggleSaved, unmarkEpisodeSeen,
 } from '../storage/library';
 import { StarRating } from '../components/StarRating';
 import { WatchProviders } from '../components/WatchProviders';
@@ -156,15 +156,10 @@ export function ShowDetailScreen() {
             )}
           </button>
           <BookmarkButton
-            active={!!item}
+            active={!!item?.saved}
             onClick={() => {
-              if (item) {
-                if (confirm(`Retirer "${details.name}" de ta biblio ?`)) {
-                  removeItem(item.id);
-                }
-              } else {
-                ensure();
-              }
+              const id = ensure();
+              if (id) toggleSaved(id);
             }}
           />
         </div>

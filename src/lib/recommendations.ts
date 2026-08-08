@@ -56,7 +56,8 @@ export function computeProfile(db: DB): UserProfile {
 
 /**
  * Choisit une explication en langage naturel pour proposer `candidateGenres`,
- * en s'appuyant sur le profil. Varie les tournures pour éviter la répétition.
+ * en s'appuyant sur le profil. Varie les tournures ET les seeds pour éviter
+ * l'effet "toujours la même phrase avec le même titre".
  */
 export function reasonFor(
   candidateGenres: string[],
@@ -64,32 +65,47 @@ export function reasonFor(
   seedIndex = 0
 ): string {
   const matches = profile.topGenres.filter((g) => candidateGenres.includes(g.name));
+  const primary = matches[0]?.name;
+  const secondary = matches[1]?.name;
 
-  // Cherche un seed qui partage au moins un genre avec le candidat
-  const seed = profile.seeds.find((s) =>
-    s.genres.some((g) => candidateGenres.includes(g))
-  );
+  // Tous les seeds qui partagent au moins un genre : on tourne dessus
+  const matchingSeeds = profile.seeds.filter((s) => s.genres.some((g) => candidateGenres.includes(g)));
+  const seed = matchingSeeds.length > 0
+    ? matchingSeeds[seedIndex % matchingSeeds.length]
+    : null;
 
-  const primaryMatch = matches[0]?.name;
-  const secondaryMatch = matches[1]?.name;
+  // Génère toutes les tournures possibles, on n'en garde qu'une (variée)
+  const candidates: string[] = [];
 
-  // Rotation d'idées différentes suivant seedIndex pour varier la présentation
-  const bucket = seedIndex % 4;
-
-  if (seed && primaryMatch) {
-    if (seed.rating && seed.rating >= 4) {
-      return `Comme ${seed.title} que tu as noté ${'★'.repeat(seed.rating)}, c'est du ${primaryMatch}.`;
+  if (seed && primary) {
+    if (seed.rating && seed.rating >= 8) {
+      candidates.push(`Comme ${seed.title} que tu as noté ${seed.rating}/10, c'est du ${primary}.`);
+      candidates.push(`Tu as adoré ${seed.title} ? Celui-ci est dans la même veine ${primary}.`);
     }
-    if (bucket === 0) return `Tu as aimé ${seed.title} — même univers ${primaryMatch}.`;
-    if (bucket === 1) return `Dans la lignée de ${seed.title} (${primaryMatch}).`;
+    if (seed.rating && seed.rating >= 6) {
+      candidates.push(`Dans le style de ${seed.title} — ${primary}.`);
+    }
+    candidates.push(`Si t'as aimé ${seed.title}, celui-ci est du même bord.`);
+    candidates.push(`Fan de ${seed.title} ? ${primary} c'est ton créneau.`);
   }
 
-  if (primaryMatch && secondaryMatch) {
-    return `Tu regardes beaucoup de ${primaryMatch} et de ${secondaryMatch}.`;
+  if (primary && secondary) {
+    candidates.push(`Tu regardes pas mal de ${primary} et de ${secondary}.`);
+    candidates.push(`${primary} + ${secondary} : ton mélange préféré.`);
+    candidates.push(`Mix de ${primary} et ${secondary}, comme ta biblio.`);
   }
-  if (primaryMatch) {
-    if (bucket === 2) return `Ton genre du moment : ${primaryMatch}.`;
-    return `Beaucoup de ${primaryMatch} dans ta biblio — celui-ci devrait te parler.`;
+
+  if (primary) {
+    candidates.push(`Ton genre du moment : ${primary}.`);
+    candidates.push(`Beaucoup de ${primary} chez toi, celui-ci devrait plaire.`);
+    candidates.push(`Encore du ${primary}, mais un que tu n'as pas.`);
+    candidates.push(`Solide dans le registre ${primary}.`);
+    candidates.push(`Bien noté chez les fans de ${primary}.`);
   }
-  return 'Populaire en ce moment, à découvrir.';
+
+  candidates.push('Populaire en ce moment, à découvrir.');
+  candidates.push('Tendance chez les critiques.');
+  candidates.push('Choisi pour toi, sans raison précise — juste bon.');
+
+  return candidates[seedIndex % candidates.length] ?? candidates[0];
 }

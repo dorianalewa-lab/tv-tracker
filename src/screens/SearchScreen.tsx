@@ -4,7 +4,7 @@ import { Search as SearchIcon, X, Loader2, User, SlidersHorizontal, Wand2, ListC
 import {
   searchMulti, searchTitles, searchPersons, profileUrl,
   getTrending, getUpcomingMovies, getOnAirTv, discoverWithParams,
-  getGenreMap,
+  getGenreMap, getPopular, getTopRated, discoverByGenreName,
   type MultiSearchItem, type TmdbPerson,
 } from '../api/tmdb';
 import { PosterCard } from '../components/PosterCard';
@@ -34,30 +34,48 @@ export function SearchScreen() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filtersCount = activeFilterCount(filters);
 
-  const [trending, setTrending] = useState<TmdbSearchResult[]>([]);
-  const [upcoming, setUpcoming] = useState<TmdbSearchResult[]>([]);
+  const [homeRows, setHomeRows] = useState<Record<string, TmdbSearchResult[]>>({});
   const [homeLoading, setHomeLoading] = useState(false);
 
   const knownById = useMemo(() => db.items, [db]);
   const hasQuery = debounced.trim().length > 0;
   const showHome = !hasQuery && filtersCount === 0;
 
-  // Recharge la home à chaque changement de type (Séries vs Films)
+  // Recharge la home à chaque changement de type — plein de rangées, chargées en parallèle
   useEffect(() => {
     if (!showHome) return;
     setHomeLoading(true);
-    setTrending([]); setUpcoming([]);
-    const promises: Promise<TmdbSearchResult[]>[] = [
-      getTrending(mediaType, 'week'),
+    setHomeRows({});
+    let cancelled = false;
+
+    // Chargement par petits chunks pour éviter d'attendre TOUT avant d'afficher qqch
+    const tasks: { key: string; promise: Promise<TmdbSearchResult[]> }[] = [
+      { key: 'trending',   promise: getTrending(mediaType, 'week') },
+      { key: 'secondary',  promise: mediaType === 'movie' ? getUpcomingMovies() : getOnAirTv() },
+      { key: 'popular',    promise: getPopular(mediaType) },
+      { key: 'topRated',   promise: getTopRated(mediaType) },
+      { key: 'action',     promise: discoverByGenreName(mediaType, 'Action') },
+      { key: 'comedy',     promise: discoverByGenreName(mediaType, 'Comédie') },
+      { key: 'drama',      promise: discoverByGenreName(mediaType, 'Drame') },
+      { key: 'scifi',      promise: discoverByGenreName(mediaType, mediaType === 'tv' ? 'Science-Fiction & Fantastique' : 'Science-Fiction') },
+      { key: 'horror',     promise: mediaType === 'movie' ? discoverByGenreName('movie', 'Horreur') : Promise.resolve([]) },
+      { key: 'doc',        promise: discoverByGenreName(mediaType, 'Documentaire') },
     ];
-    if (mediaType === 'movie') promises.push(getUpcomingMovies());
-    else promises.push(getOnAirTv());
-    Promise.allSettled(promises)
-      .then(([t, second]) => {
-        if (t.status === 'fulfilled') setTrending(t.value.slice(0, 20));
-        if (second && second.status === 'fulfilled') setUpcoming(second.value.slice(0, 20));
-      })
-      .finally(() => setHomeLoading(false));
+
+    for (const t of tasks) {
+      t.promise
+        .then((rows) => {
+          if (cancelled) return;
+          setHomeRows((prev) => ({ ...prev, [t.key]: rows.slice(0, 20) }));
+        })
+        .catch(() => { if (!cancelled) setHomeRows((prev) => ({ ...prev, [t.key]: [] })); });
+    }
+
+    Promise.allSettled(tasks.map((t) => t.promise)).finally(() => {
+      if (!cancelled) setHomeLoading(false);
+    });
+
+    return () => { cancelled = true; };
   }, [showHome, mediaType]);
 
   // Recherche + discover selon présence de query/filtres
@@ -226,24 +244,43 @@ export function SearchScreen() {
 
         {showHome && (
           <>
-            {homeLoading && trending.length === 0 && (
+            {homeLoading && Object.keys(homeRows).length === 0 && (
               <div className="flex items-center gap-2 text-muted text-sm py-6 justify-center">
                 <Loader2 size={16} className="animate-spin" /> Chargement…
               </div>
             )}
+
             <TrendingRow
               title={mediaType === 'tv' ? '🔥 Séries tendances' : '🔥 Films tendances'}
-              items={trending}
+              items={homeRows.trending ?? []}
               viewAllHref={`/explore/${mediaType === 'tv' ? 'trending-tv' : 'trending-movie'}`}
             />
             <TrendingRow
               title={mediaType === 'tv' ? '📺 En ce moment à la TV' : '🎬 Prochainement au ciné'}
-              items={upcoming}
+              items={homeRows.secondary ?? []}
               viewAllHref={mediaType === 'tv' ? '/explore/onair' : '/explore/upcoming'}
             />
+            <TrendingRow
+              title={mediaType === 'tv' ? '⭐ Séries populaires' : '⭐ Films populaires'}
+              items={homeRows.popular ?? []}
+              viewAllHref={`/catalog/${mediaType}`}
+            />
+            <TrendingRow
+              title="🏆 Les mieux notés"
+              items={homeRows.topRated ?? []}
+              viewAllHref={`/catalog/${mediaType}`}
+            />
+            <TrendingRow title="💥 Action"        items={homeRows.action ?? []} />
+            <TrendingRow title="😂 Comédie"       items={homeRows.comedy ?? []} />
+            <TrendingRow title="🎭 Drame"         items={homeRows.drama ?? []} />
+            <TrendingRow title="🚀 Sci-Fi"        items={homeRows.scifi ?? []} />
+            {mediaType === 'movie' && (
+              <TrendingRow title="😱 Horreur"     items={homeRows.horror ?? []} />
+            )}
+            <TrendingRow title="🎥 Documentaires" items={homeRows.doc ?? []} />
 
             {/* CTA catalogue rapide : rattraper sa biblio en un clin d'œil */}
-            <div className="px-4 mt-2">
+            <div className="px-4 mt-4 mb-6">
               <Link
                 to={`/catalog/${mediaType}`}
                 className="flex items-center gap-3 p-4 rounded-2xl bg-surface border border-border active:bg-border/40 transition-colors"

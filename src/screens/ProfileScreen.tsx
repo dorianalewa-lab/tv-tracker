@@ -25,42 +25,27 @@ export function ProfileScreen() {
     <div className="min-h-full pb-24">
       {/* Bannière profil */}
       <div className="relative">
-        <div
-          className="h-40 bg-cover bg-center"
-          style={{
-            backgroundImage: db.profile.bannerUrl
-              ? `url(${db.profile.bannerUrl})`
-              : undefined,
-            background: db.profile.bannerUrl
-              ? undefined
-              : 'linear-gradient(135deg, rgba(245,197,24,0.4), rgba(147,51,234,0.2), var(--tw-bg))',
-          }}
-        />
-        {db.profile.bannerUrl && (
-          <div className="absolute inset-0 h-40 bg-gradient-to-b from-black/20 via-transparent to-bg" />
-        )}
+        <div className="h-32 bg-gradient-to-br from-accent/40 via-purple-600/20 to-bg" />
         <div className="absolute top-3 right-3 flex gap-2">
           <Link
             to="/friends"
             aria-label="Amis"
-            className="w-10 h-10 rounded-full bg-black/50 backdrop-blur flex items-center justify-center text-white hover:bg-black/70"
+            className="w-10 h-10 rounded-full bg-black/40 backdrop-blur flex items-center justify-center text-white hover:bg-black/60"
           >
             <Users size={20} />
           </Link>
           <Link
             to="/settings"
             aria-label="Paramètres"
-            className="w-10 h-10 rounded-full bg-black/50 backdrop-blur flex items-center justify-center text-white hover:bg-black/70"
+            className="w-10 h-10 rounded-full bg-black/40 backdrop-blur flex items-center justify-center text-white hover:bg-black/60"
           >
             <Settings size={20} />
           </Link>
         </div>
 
         <div className="px-4 -mt-12 flex items-end gap-3">
-          <div className="w-20 h-20 rounded-full bg-surface border-4 border-bg overflow-hidden flex items-center justify-center text-4xl shadow-xl shrink-0">
-            {db.profile.avatarUrl
-              ? <img src={db.profile.avatarUrl} alt="" className="w-full h-full object-cover" />
-              : (db.profile.emoji ?? '🎬')}
+          <div className="w-20 h-20 rounded-full bg-surface border-4 border-bg flex items-center justify-center text-4xl shadow-xl shrink-0">
+            {db.profile.emoji ?? '🎬'}
           </div>
           <div className="pb-2 min-w-0 flex-1">
             <h1 className="text-xl font-bold leading-tight truncate">{db.profile.displayName}</h1>

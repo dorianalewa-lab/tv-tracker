@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  ArrowLeft, Download, Upload, Trash2, Loader2, Check, LogOut, Image, User,
+  ArrowLeft, Download, Upload, Trash2, Loader2, Check, LogOut,
 } from 'lucide-react';
 import { useDB } from '../hooks/useLibrary';
 import { exportDB, importDB, resetDB } from '../storage/db';
@@ -9,7 +9,6 @@ import { updateProfile } from '../storage/library';
 import { getProvidersForRegion, IMG_BASE, type RegionProvider } from '../api/tmdb';
 import { signOut, useAuth } from '../hooks/useAuth';
 import { wipeCloudData } from '../lib/cloudSync';
-import { TmdbImagePicker } from '../components/TmdbImagePicker';
 
 const REGIONS = [
   { code: 'CH', label: 'Suisse' },
@@ -24,7 +23,6 @@ export function SettingsScreen() {
   const db = useDB();
   const { profile } = db;
   const { user } = useAuth();
-  const [pickerMode, setPickerMode] = useState<'poster' | 'backdrop' | null>(null);
 
   const [providers, setProviders] = useState<RegionProvider[] | null>(null);
   const [loadingProviders, setLoadingProviders] = useState(true);
@@ -97,17 +95,14 @@ export function SettingsScreen() {
       </div>
 
       <div className="px-4 pt-4 space-y-6">
-        {/* Identité */}
+        {/* Identité — emoji + nom */}
         <section className="flex items-center gap-4">
-          <button
-            onClick={() => setPickerMode('poster')}
-            className="w-20 h-20 rounded-full bg-surface border border-border overflow-hidden flex items-center justify-center text-4xl shrink-0"
-            aria-label="Changer l'avatar"
-          >
-            {profile.avatarUrl
-              ? <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
-              : (profile.emoji ?? '🎬')}
-          </button>
+          <input
+            value={profile.emoji ?? '🎬'}
+            onChange={(e) => updateProfile({ emoji: e.target.value })}
+            maxLength={2}
+            className="w-20 h-20 text-4xl text-center bg-surface border border-border rounded-full"
+          />
           <div className="flex-1 min-w-0">
             <label className="text-xs text-muted">Nom affiché</label>
             <input
@@ -116,38 +111,6 @@ export function SettingsScreen() {
               className="mt-1 w-full bg-surface border border-border rounded-lg px-3 py-2 text-base outline-none focus:border-muted"
             />
           </div>
-        </section>
-
-        {/* Personnalisation avatar + bannière */}
-        <section>
-          <label className="text-sm font-semibold text-muted uppercase tracking-wide">
-            Personnalisation
-          </label>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <button
-              onClick={() => setPickerMode('poster')}
-              className="flex items-center justify-center gap-2 py-3 rounded-lg border border-border text-sm"
-            >
-              <User size={16} /> Changer avatar
-            </button>
-            <button
-              onClick={() => setPickerMode('backdrop')}
-              className="flex items-center justify-center gap-2 py-3 rounded-lg border border-border text-sm"
-            >
-              <Image size={16} /> Changer bannière
-            </button>
-          </div>
-          {(profile.avatarUrl || profile.bannerUrl) && (
-            <button
-              onClick={() => updateProfile({ avatarUrl: null, bannerUrl: null })}
-              className="mt-2 w-full text-xs text-muted underline"
-            >
-              Remettre le style par défaut (emoji + gradient)
-            </button>
-          )}
-          <p className="mt-2 text-[11px] text-muted italic">
-            Choisis l'affiche d'un film pour ton avatar, et une image de fond de film pour la bannière.
-          </p>
         </section>
 
         {/* Région */}
@@ -276,18 +239,6 @@ export function SettingsScreen() {
         </div>
       )}
 
-      {pickerMode && (
-        <TmdbImagePicker
-          mode={pickerMode}
-          onPick={(url) => {
-            if (pickerMode === 'poster') updateProfile({ avatarUrl: url });
-            else updateProfile({ bannerUrl: url });
-            setPickerMode(null);
-            flash('Image mise à jour');
-          }}
-          onClose={() => setPickerMode(null)}
-        />
-      )}
     </div>
   );
 }

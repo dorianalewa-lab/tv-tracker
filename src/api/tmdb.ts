@@ -247,6 +247,45 @@ export async function getOnAirTv(page = 1): Promise<TmdbSearchResult[]> {
   return (data.results as TmdbSearchResult[]).map((r) => ({ ...r, media_type: 'tv' }));
 }
 
+export async function getPopular(mediaType: 'tv' | 'movie', page = 1): Promise<TmdbSearchResult[]> {
+  const res = await fetch(url(`/${mediaType}/popular`, { page }));
+  if (!res.ok) throw new Error(`TMDB ${res.status}`);
+  const data = await res.json();
+  return (data.results as TmdbSearchResult[]).map((r) => ({ ...r, media_type: mediaType }));
+}
+
+export async function getTopRated(mediaType: 'tv' | 'movie', page = 1): Promise<TmdbSearchResult[]> {
+  const res = await fetch(url(`/${mediaType}/top_rated`, { page }));
+  if (!res.ok) throw new Error(`TMDB ${res.status}`);
+  const data = await res.json();
+  return (data.results as TmdbSearchResult[]).map((r) => ({ ...r, media_type: mediaType }));
+}
+
+/** Découvre les titres par genre (nom FR). Utilise le genre map en cache. */
+export async function discoverByGenreName(
+  mediaType: 'tv' | 'movie',
+  genreName: string,
+  page = 1
+): Promise<TmdbSearchResult[]> {
+  const map = await getGenreMap(mediaType);
+  const id = map.get(genreName);
+  if (!id) return [];
+  const rows = await discoverWithParams(mediaType, {
+    with_genres: String(id),
+    sort_by: 'popularity.desc',
+    'vote_count.gte': 100,
+    page,
+  });
+  return rows.map((r) => ({
+    ...r,
+    media_type: mediaType,
+    title: mediaType === 'movie' ? r.title : r.name,
+    name: r.name,
+    release_date: r.release_date,
+    first_air_date: r.first_air_date,
+  })) as TmdbSearchResult[];
+}
+
 // -------- Providers par région (pour choix profil) --------
 
 export type RegionProvider = {
