@@ -30,3 +30,4 @@ VITE_SUPABASE_ANON_KEY=xxx
 Le schéma SQL est dans [`supabase/schema.sql`](supabase/schema.sql).
 La migration pour les amis dans [`supabase/friends-migration.sql`](supabase/friends-migration.sql).
 À exécuter dans SQL Editor du projet Supabase.
+
