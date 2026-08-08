@@ -13,6 +13,7 @@ import {
 import { useDB } from '../hooks/useLibrary';
 import { updateProfile } from '../storage/library';
 import { computeProfile } from '../lib/recommendations';
+import { filterAllowedProviders } from '../lib/providers';
 
 type StepKey = 'mood' | 'time' | 'format' | 'platforms' | 'safety';
 const STEP_ORDER_FULL:         StepKey[] = ['mood', 'time', 'format', 'platforms', 'safety'];
@@ -63,7 +64,7 @@ export function AskScreen() {
   useEffect(() => {
     if (currentStepKey !== 'platforms' || availableProviders) return;
     getProvidersForRegion(db.profile.region)
-      .then((p) => setAvailableProviders(p.slice(0, 20)))
+      .then((p) => setAvailableProviders(filterAllowedProviders(p)))
       .catch(() => setAvailableProviders([]));
   }, [currentStepKey, availableProviders, db.profile.region]);
 

@@ -4,6 +4,7 @@ import {
   getGenreMap, getProvidersForRegion, IMG_BASE,
   type RegionProvider,
 } from '../api/tmdb';
+import { filterAllowedProviders } from '../lib/providers';
 
 export type SearchFilters = {
   yearMin: number | null;
@@ -55,7 +56,7 @@ export function FiltersSheet({ value, region, onChange, onClose }: Props) {
 
   useEffect(() => {
     getProvidersForRegion(region)
-      .then((p) => setProviders(p.slice(0, 24)))
+      .then((p) => setProviders(filterAllowedProviders(p)))
       .catch(() => setProviders([]));
   }, [region]);
 

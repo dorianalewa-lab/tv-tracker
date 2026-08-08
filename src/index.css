@@ -19,9 +19,17 @@ body {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Bulles du chat coach : fade-in doux à l'arrivée */
+/* Bulles du chat : fade-in doux à l'arrivée */
 @keyframes chatFadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: none; }
 }
 .chat-fade-in { animation: chatFadeIn 220ms ease-out both; }
+
+/* iOS Safari zoom automatiquement sur les inputs de moins de 16px.
+   On force 16px sur tous les champs saisissables pour l'empêcher. */
+input:not([type='checkbox']):not([type='radio']):not([type='range']),
+select,
+textarea {
+  font-size: 16px;
+}

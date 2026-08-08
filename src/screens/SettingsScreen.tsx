@@ -9,15 +9,7 @@ import { updateProfile } from '../storage/library';
 import { getProvidersForRegion, IMG_BASE, type RegionProvider } from '../api/tmdb';
 import { signOut, useAuth } from '../hooks/useAuth';
 import { wipeCloudData } from '../lib/cloudSync';
-
-const REGIONS = [
-  { code: 'CH', label: 'Suisse' },
-  { code: 'FR', label: 'France' },
-  { code: 'BE', label: 'Belgique' },
-  { code: 'LU', label: 'Luxembourg' },
-  { code: 'CA', label: 'Canada' },
-  { code: 'US', label: 'États-Unis' },
-];
+import { filterAllowedProviders } from '../lib/providers';
 
 export function SettingsScreen() {
   const db = useDB();
@@ -31,7 +23,7 @@ export function SettingsScreen() {
   useEffect(() => {
     setLoadingProviders(true);
     getProvidersForRegion(profile.region)
-      .then((p) => setProviders(p))
+      .then((p) => setProviders(filterAllowedProviders(p)))
       .catch(() => setProviders([]))
       .finally(() => setLoadingProviders(false));
   }, [profile.region]);
@@ -113,38 +105,13 @@ export function SettingsScreen() {
           </div>
         </section>
 
-        {/* Région */}
-        <section>
-          <label className="text-sm font-semibold text-muted uppercase tracking-wide">
-            Région
-          </label>
-          <div className="mt-2 grid grid-cols-3 gap-2">
-            {REGIONS.map((r) => (
-              <button
-                key={r.code}
-                onClick={() => updateProfile({ region: r.code })}
-                className={`py-2 rounded-lg text-sm border transition ${
-                  profile.region === r.code
-                    ? 'bg-accent text-black border-accent font-medium'
-                    : 'border-border text-muted'
-                }`}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
-          <p className="mt-2 text-[11px] text-muted">
-            Détermine les plateformes de streaming affichées et le filtre "Où regarder" sur les fiches.
-          </p>
-        </section>
-
         {/* Plateformes */}
         <section>
           <label className="text-sm font-semibold text-muted uppercase tracking-wide">
             Mes plateformes
           </label>
           <p className="mt-1 text-xs text-muted">
-            Coche ce à quoi tu as accès — le coach du soir et les reco filtreront les suggestions selon ça.
+            Coche ce à quoi tu as accès — les suggestions et reco filtreront selon ça.
           </p>
           {loadingProviders && (
             <div className="mt-4 flex items-center gap-2 text-muted text-sm">
