@@ -30,7 +30,7 @@ export function LibraryScreen() {
 
   return (
     <div className="min-h-full pb-24">
-      <div className="sticky top-0 z-10 bg-bg/95 backdrop-blur border-b border-border">
+      <div className="sticky top-0 z-10 glass-bar border-b">
         <div className="px-4 pt-4 pb-2">
           <h1 className="text-2xl font-bold">Ma bibliothèque</h1>
         </div>
@@ -46,7 +46,7 @@ export function LibraryScreen() {
                   onClick={() => setTab(t.status)}
                   className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition ${
                     active
-                      ? 'bg-accent text-black border-accent font-medium'
+                      ? 'bg-accent text-white border-accent font-medium'
                       : 'border-border text-muted'
                   }`}
                 >

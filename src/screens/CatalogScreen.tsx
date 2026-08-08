@@ -138,7 +138,7 @@ export function CatalogScreen() {
 
   return (
     <div className="min-h-full pb-24">
-      <div className="sticky top-0 z-10 bg-bg/95 backdrop-blur border-b border-border">
+      <div className="sticky top-0 z-10 glass-bar border-b">
         <div className="px-4 pt-4 pb-2 flex items-center gap-3">
           <Link to="/" className="p-2 -m-2 text-muted" aria-label="Retour">
             <ArrowLeft size={20} />
@@ -147,13 +147,13 @@ export function CatalogScreen() {
           <div className="inline-flex rounded-full border border-border bg-surface p-0.5 text-xs shrink-0">
             <button
               onClick={() => switchType('tv')}
-              className={`px-2.5 py-1 rounded-full ${mediaType === 'tv' ? 'bg-accent text-black font-medium' : 'text-muted'}`}
+              className={`px-2.5 py-1 rounded-full ${mediaType === 'tv' ? 'bg-accent text-white font-medium' : 'text-muted'}`}
             >
               Séries
             </button>
             <button
               onClick={() => switchType('movie')}
-              className={`px-2.5 py-1 rounded-full ${mediaType === 'movie' ? 'bg-accent text-black font-medium' : 'text-muted'}`}
+              className={`px-2.5 py-1 rounded-full ${mediaType === 'movie' ? 'bg-accent text-white font-medium' : 'text-muted'}`}
             >
               Films
             </button>
@@ -170,7 +170,7 @@ export function CatalogScreen() {
                   key={s.key}
                   onClick={() => setSort(s.key)}
                   className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap border transition ${
-                    active ? 'bg-accent text-black border-accent font-medium' : 'border-border text-muted'
+                    active ? 'bg-accent text-white border-accent font-medium' : 'border-border text-muted'
                   }`}
                 >
                   {s.label}
@@ -182,7 +182,7 @@ export function CatalogScreen() {
           <button
             onClick={() => setFiltersOpen(true)}
             className={`relative w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 mr-2 ${
-              filtersCount > 0 ? 'bg-accent text-black border-accent' : 'bg-surface border-border text-muted'
+              filtersCount > 0 ? 'bg-accent text-white border-accent' : 'bg-surface border-border text-muted'
             }`}
             aria-label="Filtres"
           >
@@ -214,7 +214,7 @@ export function CatalogScreen() {
                 to={mediaType === 'tv' ? `/show/${r.id}` : `/movie/${r.id}`}
                 className="flex items-center gap-3 flex-1 min-w-0"
               >
-                <div className="w-11 h-16 rounded-md overflow-hidden bg-surface border border-border shrink-0">
+                <div className="w-11 h-16 rounded-md overflow-hidden glass shrink-0">
                   {posterUrl(r.poster_path, 'w154') ? (
                     <img src={posterUrl(r.poster_path, 'w154')!} alt="" loading="lazy" className="w-full h-full object-cover" />
                   ) : null}
@@ -237,7 +237,7 @@ export function CatalogScreen() {
                 disabled={busy}
                 aria-label={isSeen ? 'Marquer non vu' : 'Marquer vu'}
                 className={`w-11 h-11 rounded-full flex items-center justify-center transition shrink-0 ${
-                  isSeen ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-300' : 'bg-surface border border-border text-muted active:scale-95'
+                  isSeen ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-300' : 'glass text-muted active:scale-95'
                 } ${busy ? 'opacity-60' : ''}`}
               >
                 {busy ? <Loader2 size={18} className="animate-spin" /> : <Check size={20} strokeWidth={isSeen ? 3 : 2} />}

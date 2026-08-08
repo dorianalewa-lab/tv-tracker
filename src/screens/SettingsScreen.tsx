@@ -76,7 +76,7 @@ export function SettingsScreen() {
 
   return (
     <div className="min-h-full pb-24">
-      <div className="sticky top-0 z-10 bg-bg/95 backdrop-blur border-b border-border">
+      <div className="sticky top-0 z-10 glass-bar border-b">
         <div className="px-4 pt-4 pb-3 flex items-center justify-between">
           <Link to="/profile" className="p-2 -m-2 text-muted" aria-label="Retour">
             <ArrowLeft size={20} />
@@ -93,14 +93,14 @@ export function SettingsScreen() {
             value={profile.emoji ?? '🎬'}
             onChange={(e) => updateProfile({ emoji: e.target.value })}
             maxLength={2}
-            className="w-20 h-20 text-4xl text-center bg-surface border border-border rounded-full"
+            className="w-20 h-20 text-4xl text-center glass rounded-full"
           />
           <div className="flex-1 min-w-0">
             <label className="text-xs text-muted">Nom affiché</label>
             <input
               value={profile.displayName}
               onChange={(e) => updateProfile({ displayName: e.target.value })}
-              className="mt-1 w-full bg-surface border border-border rounded-lg px-3 py-2 text-base outline-none focus:border-muted"
+              className="mt-1 w-full glass rounded-lg px-3 py-2 text-base outline-none focus:border-muted"
             />
           </div>
         </section>
@@ -231,7 +231,7 @@ export function SettingsScreen() {
       </div>
 
       {saved && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-surface border border-border px-4 py-2 rounded-full text-sm shadow-lg z-50">
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 glass px-4 py-2 rounded-full text-sm shadow-lg z-50">
           {saved}
         </div>
       )}

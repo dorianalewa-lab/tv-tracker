@@ -110,7 +110,7 @@ export function ShowDetailScreen() {
 
       <div className="px-4 -mt-16 relative">
         <div className="flex gap-3 items-end">
-          <div className="w-24 sm:w-28 aspect-[2/3] rounded-xl overflow-hidden bg-surface border border-border shrink-0 shadow-xl">
+          <div className="w-24 sm:w-28 aspect-[2/3] rounded-xl overflow-hidden glass shrink-0 shadow-xl">
             {posterUrl(details.poster_path) ? (
               <img src={posterUrl(details.poster_path)!} alt="" className="w-full h-full object-cover" />
             ) : null}
@@ -129,7 +129,7 @@ export function ShowDetailScreen() {
         {details.genres.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5">
             {details.genres.map((g) => (
-              <span key={g.id} className="text-[11px] px-2 py-0.5 rounded-full bg-surface border border-border text-muted">
+              <span key={g.id} className="text-[11px] px-2 py-0.5 rounded-full glass text-muted">
                 {g.name}
               </span>
             ))}
@@ -144,7 +144,7 @@ export function ShowDetailScreen() {
             className={`flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition disabled:opacity-70 ${
               isCompleted
                 ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-300'
-                : 'bg-accent text-black'
+                : 'bg-accent text-white'
             }`}
           >
             {markingAll ? (
@@ -290,7 +290,7 @@ function SeasonBlock({
   }
 
   return (
-    <div className="bg-surface border border-border rounded-xl overflow-hidden">
+    <div className="glass rounded-xl overflow-hidden">
       <button onClick={() => setOpen((v) => !v)} className="w-full flex items-center gap-3 px-3 py-2.5 text-left">
         {season.poster_path && (
           <img
@@ -351,7 +351,7 @@ function SeasonBlock({
                         onClick={() => toggleEpisode(ep)}
                         aria-label={seen ? 'Marquer non vu' : 'Marquer vu'}
                         className={`w-11 h-11 rounded-full flex items-center justify-center transition shrink-0 ${
-                          seen ? 'bg-accent text-black' : 'bg-bg border border-border text-muted active:scale-95'
+                          seen ? 'bg-accent text-white' : 'bg-bg border border-border text-muted active:scale-95'
                         }`}
                       >
                         <Check size={20} strokeWidth={seen ? 3 : 2} />

@@ -43,7 +43,7 @@ export function Trailer({ mediaType, tmdbId, backdropUrl }: {
   return (
     <button
       onClick={() => setPlaying(true)}
-      className="relative w-full aspect-video rounded-xl overflow-hidden bg-surface border border-border group"
+      className="relative w-full aspect-video rounded-xl overflow-hidden glass group"
       aria-label="Lire le trailer"
     >
       {backdropUrl && (

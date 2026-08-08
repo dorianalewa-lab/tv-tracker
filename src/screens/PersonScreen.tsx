@@ -67,7 +67,7 @@ export function PersonScreen() {
         <BackLink />
 
         <div className="flex gap-4 items-center mt-4">
-          <div className="w-24 h-24 rounded-full overflow-hidden bg-surface border border-border flex items-center justify-center shrink-0">
+          <div className="w-24 h-24 rounded-full overflow-hidden glass flex items-center justify-center shrink-0">
             {profileUrl(person.profile_path, 'w185') ? (
               <img src={profileUrl(person.profile_path, 'w185')!} alt="" className="w-full h-full object-cover" />
             ) : (

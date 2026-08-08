@@ -87,7 +87,7 @@ export function FriendProfileScreen() {
               key={p}
               onClick={() => setPeriod(p)}
               className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition ${
-                period === p ? 'bg-accent text-black border-accent font-medium' : 'border-border text-muted'
+                period === p ? 'bg-accent text-white border-accent font-medium' : 'border-border text-muted'
               }`}
             >
               {PERIOD_LABELS[p]}
@@ -173,7 +173,7 @@ export function FriendProfileScreen() {
         {stats.mostBinged && (
           <section>
             <h2 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">Son obsession</h2>
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border">
+            <div className="flex items-center gap-3 p-3 rounded-xl glass">
               <div className="w-14 h-20 rounded-md overflow-hidden bg-bg border border-border shrink-0">
                 {posterUrl(stats.mostBinged.item.posterPath, 'w154') && (
                   <img src={posterUrl(stats.mostBinged.item.posterPath, 'w154')!} alt="" className="w-full h-full object-cover" />
@@ -216,7 +216,7 @@ export function FriendProfileScreen() {
 
 function MiniStat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="bg-surface border border-border rounded-xl p-3 text-center">
+    <div className="glass rounded-xl p-3 text-center">
       <div className="text-xl font-bold">{value}</div>
       <div className="text-[11px] text-muted mt-0.5">{label}</div>
     </div>

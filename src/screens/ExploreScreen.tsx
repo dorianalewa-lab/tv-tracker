@@ -56,7 +56,7 @@ export function ExploreScreen() {
 
   return (
     <div className="min-h-full pb-24">
-      <div className="sticky top-0 z-10 bg-bg/95 backdrop-blur border-b border-border">
+      <div className="sticky top-0 z-10 glass-bar border-b">
         <div className="px-4 pt-4 pb-3 flex items-center gap-3">
           <Link to="/" className="p-2 -m-2 text-muted" aria-label="Retour">
             <ArrowLeft size={20} />

@@ -73,7 +73,7 @@ export function RecommendationsScreen() {
 
   return (
     <div className="min-h-full pb-24">
-      <div className="sticky top-0 z-10 bg-bg/95 backdrop-blur border-b border-border">
+      <div className="sticky top-0 z-10 glass-bar border-b">
         <div className="px-4 pt-4 pb-3 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Pour toi</h1>
@@ -173,7 +173,7 @@ function Section({
           <Link
             key={`${s.mediaType}:${s.tmdbId}`}
             to={mediaType === 'tv' ? `/show/${s.tmdbId}` : `/movie/${s.tmdbId}`}
-            className="flex gap-3 p-2 rounded-xl bg-surface border border-border active:bg-border/40 transition-colors"
+            className="flex gap-3 p-2 rounded-xl glass active:bg-border/40 transition-colors"
           >
             <div className="w-16 h-24 shrink-0 rounded-md overflow-hidden bg-bg border border-border">
               {posterUrl(s.posterPath, 'w154') ? (
@@ -226,7 +226,7 @@ function EmptyState({ itemCount }: { itemCount: number }) {
       </p>
       <Link
         to="/"
-        className="mt-6 inline-block px-4 py-2 rounded-full bg-accent text-black font-medium text-sm"
+        className="mt-6 inline-block px-4 py-2 rounded-full bg-accent text-white font-medium text-sm"
       >
         Aller à la recherche
       </Link>

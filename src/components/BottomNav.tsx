@@ -11,7 +11,7 @@ const tabs = [
 export function BottomNav() {
   return (
     <nav
-      className="fixed bottom-0 inset-x-0 bg-surface border-t border-border z-40"
+      className="fixed bottom-0 inset-x-0 glass-bar border-t z-40"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <ul className="flex">

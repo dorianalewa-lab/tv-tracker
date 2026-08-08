@@ -26,7 +26,7 @@ export function PosterCard({
       onClick={onClick}
       className="text-left w-full active:opacity-70 transition-opacity"
     >
-      <div className="aspect-[2/3] w-full rounded-xl overflow-hidden bg-surface border border-border relative">
+      <div className="aspect-[2/3] w-full rounded-xl overflow-hidden glass relative">
         {src ? (
           <img src={src} alt={title} loading="lazy" className="w-full h-full object-cover" />
         ) : (

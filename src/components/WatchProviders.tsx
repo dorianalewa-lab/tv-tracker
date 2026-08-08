@@ -96,7 +96,7 @@ function ProviderRow({ label, providers }: { label: string; providers: WatchProv
         {providers.map((p) => (
           <div
             key={p.provider_id}
-            className="flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-lg bg-surface border border-border"
+            className="flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-lg glass"
             title={p.provider_name}
           >
             <img

@@ -99,7 +99,7 @@ export function FiltersSheet({ value, region, onChange, onClose }: Props) {
                       }))
                     }
                     className={`text-xs px-3 py-1.5 rounded-full border transition ${
-                      active ? 'bg-accent text-black border-accent font-medium' : 'border-border text-muted'
+                      active ? 'bg-accent text-white border-accent font-medium' : 'border-border text-muted'
                     }`}
                   >
                     {g}
@@ -194,7 +194,7 @@ export function FiltersSheet({ value, region, onChange, onClose }: Props) {
           <button onClick={reset} className="flex-1 py-3 rounded-lg border border-border text-sm text-muted">
             Réinitialiser
           </button>
-          <button onClick={apply} className="flex-1 py-3 rounded-lg bg-accent text-black text-sm font-medium">
+          <button onClick={apply} className="flex-1 py-3 rounded-lg bg-accent text-white text-sm font-medium">
             Appliquer{activeFilterCount(local) > 0 && ` (${activeFilterCount(local)})`}
           </button>
         </div>

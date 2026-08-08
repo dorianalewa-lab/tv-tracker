@@ -36,7 +36,7 @@ export function FriendsScreen() {
 
   return (
     <div className="min-h-full pb-24">
-      <div className="sticky top-0 z-10 bg-bg/95 backdrop-blur border-b border-border">
+      <div className="sticky top-0 z-10 glass-bar border-b">
         <div className="px-4 pt-4 pb-3 flex items-center justify-between">
           <Link to="/profile" className="p-2 -m-2 text-muted" aria-label="Retour">
             <ArrowLeft size={20} />
@@ -45,7 +45,7 @@ export function FriendsScreen() {
           <button
             onClick={() => setAddOpen(true)}
             aria-label="Ajouter un ami"
-            className="w-10 h-10 rounded-full bg-accent text-black flex items-center justify-center"
+            className="w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center"
           >
             <UserPlus size={18} />
           </button>
@@ -70,7 +70,7 @@ export function FriendsScreen() {
             </h2>
             <div className="space-y-2">
               {received.map((f) => (
-                <div key={f.friendshipId} className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-accent/30">
+                <div key={f.friendshipId} className="flex items-center gap-3 p-3 rounded-xl glass" style={{ borderColor: 'rgba(167,139,250,0.3)' }}>
                   <Avatar profile={f.other} />
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{f.other.displayName}</div>
@@ -86,7 +86,7 @@ export function FriendsScreen() {
                   <button
                     onClick={async () => { await acceptFriendRequest(f.friendshipId); reload(); }}
                     aria-label="Accepter"
-                    className="w-10 h-10 rounded-full bg-accent text-black flex items-center justify-center"
+                    className="w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center"
                   >
                     <Check size={18} />
                   </button>
@@ -108,7 +108,7 @@ export function FriendsScreen() {
             ) : (
               <div className="space-y-2">
                 {friends.map((f) => (
-                  <div key={f.friendshipId} className="flex items-center gap-3 p-2 rounded-xl bg-surface border border-border">
+                  <div key={f.friendshipId} className="flex items-center gap-3 p-2 rounded-xl glass">
                     <Link to={`/friend/${f.other.id}`} className="flex items-center gap-3 flex-1 min-w-0">
                       <Avatar profile={f.other} />
                       <div className="flex-1 min-w-0">
@@ -142,7 +142,7 @@ export function FriendsScreen() {
             </h2>
             <div className="space-y-2">
               {sent.map((f) => (
-                <div key={f.friendshipId} className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border opacity-80">
+                <div key={f.friendshipId} className="flex items-center gap-3 p-3 rounded-xl glass opacity-80">
                   <Avatar profile={f.other} />
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{f.other.displayName}</div>
@@ -274,7 +274,7 @@ function AddFriendSheet({ myUserId, onClose, onSent }: { myUserId: string; onClo
             <button
               onClick={handleSend}
               disabled={sending}
-              className="px-3 py-2 rounded-lg bg-accent text-black text-sm font-medium disabled:opacity-50"
+              className="px-3 py-2 rounded-lg bg-accent text-white text-sm font-medium disabled:opacity-50"
             >
               {sending ? '…' : 'Inviter'}
             </button>
