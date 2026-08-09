@@ -9,27 +9,21 @@ export type UserProfile = {
   itemCount: number;
 };
 
-// Pondérations par statut : les terminés valent plus que les "à voir".
-const STATUS_WEIGHT: Record<LibraryItem['status'], number> = {
-  completed: 3,
-  watching: 1.5,
-  planned: 0.5,
-  dropped: -2,
-};
-
 /**
  * Construit un profil de goûts à partir de la biblio.
- * Chaque item contribue à chacun de ses genres, pondéré par statut + note.
+ * Se base UNIQUEMENT sur les titres terminés — un "à voir" ne dit rien sur ce
+ * qu'on aime, seul un titre qu'on a vraiment fini parle de nos goûts.
+ * Les notes 8-10/10 boostent encore le poids de leur genre.
  */
 export function computeProfile(db: DB): UserProfile {
-  const items = Object.values(db.items);
+  const allItems = Object.values(db.items);
+  const items = allItems.filter((it) => it.status === 'completed');
   const genreScore = new Map<string, number>();
 
   for (const it of items) {
-    const statusW = STATUS_WEIGHT[it.status];
-    // Bonus note : +0 si non noté, jusqu'à +2 pour 5 étoiles
-    const ratingBonus = it.rating ? (it.rating - 3) * 0.5 : 0;
-    const w = statusW + ratingBonus;
+    // Poids de base 3 pour un terminé, + bonus si noté haut (8-10/10 → +1 à +2.5)
+    const ratingBonus = it.rating ? Math.max(0, (it.rating - 6) * 0.5) : 0;
+    const w = 3 + ratingBonus;
     for (const g of it.genres) {
       genreScore.set(g, (genreScore.get(g) ?? 0) + w);
     }
@@ -40,9 +34,9 @@ export function computeProfile(db: DB): UserProfile {
     .filter((g) => g.score > 0)
     .sort((a, b) => b.score - a.score);
 
-  // Seeds : titres "aimés" pour ancrer les explications sur des cas concrets
+  // Seeds : tous les titres terminés servent d'ancres pour les explications
+  // (ordre : les mieux notés d'abord, puis les autres — variété assurée par reasonFor)
   const seeds = items
-    .filter((it) => (it.rating != null && it.rating >= 4) || it.status === 'completed')
     .slice()
     .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
 

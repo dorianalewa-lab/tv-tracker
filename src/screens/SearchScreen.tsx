@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search as SearchIcon, X, Loader2, User, SlidersHorizontal, Wand2, ListChecks } from 'lucide-react';
+import { Search as SearchIcon, X, Loader2, User, SlidersHorizontal, Wand2, ListChecks, Check } from 'lucide-react';
 import {
   searchMulti, searchTitles, searchPersons, profileUrl,
   getTrending, getUpcomingMovies, getOnAirTv, discoverWithParams,
@@ -12,6 +12,10 @@ import { FiltersSheet, EMPTY_FILTERS, activeFilterCount, type SearchFilters } fr
 import { TrendingRow } from '../components/TrendingRow';
 import { useDebounce } from '../hooks/useDebounce';
 import { useDB } from '../hooks/useLibrary';
+import {
+  ensureItemFromLight, enrichItemInBackground, markAllEpisodesSeen, markMovieSeen,
+  resetTvProgress, unmarkMovieSeen,
+} from '../storage/library';
 import type { TmdbSearchResult, Status } from '../types';
 
 type TypeToggle = 'tv' | 'movie';
@@ -313,6 +317,7 @@ export function SearchScreen() {
               {filteredTitles.map((r) => {
                 const id = `${mediaType}:${r.id}`;
                 const existing = knownById[id];
+                const isSeen = existing?.status === 'completed';
                 return (
                   <div key={id} className="relative">
                     <Link to={mediaType === 'tv' ? `/show/${r.id}` : `/movie/${r.id}`} className="block">
@@ -325,11 +330,28 @@ export function SearchScreen() {
                         saved={existing?.saved ?? false}
                       />
                     </Link>
-                    {existing && (
+                    {existing && !isSeen && (
                       <span className="absolute bottom-14 left-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-black/70 text-accent border border-accent/60">
                         {labelOf(existing.status)}
                       </span>
                     )}
+                    {/* Bouton "Vu" en overlay — coche rapide sans ouvrir la fiche */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        void toggleQuickSeen(r, mediaType, isSeen);
+                      }}
+                      aria-label={isSeen ? 'Marquer non vu' : 'Marquer comme vu'}
+                      className={`absolute bottom-14 right-1.5 h-8 min-w-[38px] px-2 rounded-full flex items-center justify-center gap-1 text-[11px] font-bold shadow-lg transition active:scale-90 ${
+                        isSeen
+                          ? 'bg-emerald-500/90 text-white'
+                          : 'bg-accent text-black'
+                      }`}
+                    >
+                      <Check size={14} strokeWidth={3} />
+                      <span>Vu</span>
+                    </button>
                   </div>
                 );
               })}
@@ -392,6 +414,26 @@ export function SearchScreen() {
 
     </div>
   );
+}
+
+/**
+ * Toggle rapide "vu" depuis les résultats de recherche : évite de devoir
+ * ouvrir la fiche pour cocher. Auto-ajoute à la biblio si absent.
+ */
+async function toggleQuickSeen(r: TmdbSearchResult, mediaType: 'tv' | 'movie', isSeen: boolean) {
+  const id = `${mediaType}:${r.id}`;
+  if (isSeen) {
+    if (mediaType === 'movie') unmarkMovieSeen(id);
+    else resetTvProgress(id);
+    return;
+  }
+  const localId = ensureItemFromLight(r, mediaType);
+  if (mediaType === 'movie') {
+    markMovieSeen(localId);
+    void enrichItemInBackground(localId, r.id, 'movie');
+  } else {
+    await markAllEpisodesSeen(localId, r.id);
+  }
 }
 
 function yearFrom(r: TmdbSearchResult): number | null {
