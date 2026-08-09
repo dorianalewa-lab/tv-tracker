@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Trash2, MoreVertical } from 'lucide-react';
 import { useDB } from '../hooks/useLibrary';
 import { removeItem } from '../storage/library';
 import { PosterCard } from '../components/PosterCard';
-import { SwipeableCard } from '../components/SwipeableCard';
 import type { LibraryItem, Status } from '../types';
 
 const TABS: { status: Status; label: string }[] = [
@@ -15,7 +15,7 @@ const TABS: { status: Status; label: string }[] = [
 export function LibraryScreen() {
   const db = useDB();
   const [tab, setTab] = useState<Status>('watching');
-  const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
+  const [menuFor, setMenuFor] = useState<LibraryItem | null>(null);
 
   const grouped = useMemo(() => {
     const g: Record<Status, LibraryItem[]> = { planned: [], watching: [], completed: [], dropped: [] };
@@ -62,37 +62,56 @@ export function LibraryScreen() {
         {items.length === 0 ? (
           <EmptyState status={tab} />
         ) : (
-          <>
-            <div className="text-[11px] text-muted mb-3 italic">
-              Astuce : balaye une carte vers la gauche pour la retirer.
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {items.map((it) => (
-                <SwipeableCard
-                  key={it.id}
-                  isOpen={openSwipeId === it.id}
-                  onOpen={() => setOpenSwipeId(it.id)}
-                  onCloseRequest={() => setOpenSwipeId(null)}
-                  onDelete={() => { removeItem(it.id); setOpenSwipeId(null); }}
+          <div className="grid grid-cols-4 gap-2">
+            {items.map((it) => (
+              <div key={it.id} className="relative">
+                <Link
+                  to={it.mediaType === 'tv' ? `/show/${it.tmdbId}` : `/movie/${it.tmdbId}`}
+                  className="block"
                 >
-                  <Link
-                    to={it.mediaType === 'tv' ? `/show/${it.tmdbId}` : `/movie/${it.tmdbId}`}
-                    className="block"
-                  >
-                    <PosterCard
-                      posterPath={it.posterPath}
-                      title={it.title}
-                      year={it.year}
-                      mediaType={it.mediaType}
-                      voteAverage={it.voteAverage}
-                    />
-                  </Link>
-                </SwipeableCard>
-              ))}
-            </div>
-          </>
+                  <PosterCard
+                    posterPath={it.posterPath}
+                    title={it.title}
+                    year={it.year}
+                    mediaType={it.mediaType}
+                    voteAverage={it.voteAverage}
+                  />
+                </Link>
+                <button
+                  onClick={() => setMenuFor(it)}
+                  className="absolute top-1 right-1 p-1 rounded-md bg-black/60 text-white"
+                  aria-label="Options"
+                >
+                  <MoreVertical size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
         )}
       </div>
+
+      {menuFor && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center" onClick={() => setMenuFor(null)}>
+          <div
+            className="w-full sm:max-w-sm bg-surface border-t sm:border border-border rounded-t-2xl sm:rounded-2xl overflow-hidden"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-4 py-3 border-b border-border font-semibold truncate">{menuFor.title}</div>
+            <button
+              onClick={() => {
+                if (confirm(`Retirer "${menuFor.title}" de la biblio ?`)) {
+                  removeItem(menuFor.id); setMenuFor(null);
+                }
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3.5 text-left text-red-400 hover:bg-bg"
+            >
+              <Trash2 size={18} />
+              Retirer de la biblio
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

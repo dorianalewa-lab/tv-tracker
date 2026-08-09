@@ -64,11 +64,12 @@ export async function searchMulti(query: string): Promise<MultiSearchItem[]> {
 
 export async function searchTitles(
   query: string,
-  type: 'tv' | 'movie'
+  type: 'tv' | 'movie',
+  page = 1
 ): Promise<TmdbSearchResult[]> {
   const q = query.trim();
   if (!q) return [];
-  const res = await fetch(url(`/search/${type}`, { query: q, include_adult: 'false', page: 1 }));
+  const res = await fetch(url(`/search/${type}`, { query: q, include_adult: 'false', page }));
   if (!res.ok) throw new Error(`TMDB ${res.status}`);
   const data = await res.json();
   // /search/tv et /search/movie ne posent pas media_type — on l'ajoute pour rester uniforme.

@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Check, Loader2, Star, SlidersHorizontal } from 'lucide-react';
-import { discoverWithParams, getGenreMap, posterUrl } from '../api/tmdb';
+import { ArrowLeft, Check, Loader2, Star, SlidersHorizontal, Search as SearchIcon, X } from 'lucide-react';
+import { discoverWithParams, getGenreMap, posterUrl, searchTitles } from '../api/tmdb';
 import { useDB } from '../hooks/useLibrary';
 import {
   enrichItemInBackground, ensureItemFromLight, markAllEpisodesSeen, markMovieSeen,
   resetTvProgress, unmarkMovieSeen,
 } from '../storage/library';
 import { FiltersSheet, EMPTY_FILTERS, activeFilterCount, type SearchFilters } from '../components/FiltersSheet';
+import { useDebounce } from '../hooks/useDebounce';
 import type { MediaType, TmdbSearchResult } from '../types';
 
 type SortKey = 'popular' | 'recent' | 'top-rated';
@@ -34,10 +35,14 @@ export function CatalogScreen() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filtersCount = activeFilterCount(filters);
 
-  // Reset la liste quand n'importe quel critère change
+  const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounce(query, 350);
+  const hasQuery = debouncedQuery.trim().length > 0;
+
+  // Reset la liste quand n'importe quel critère change (recherche incluse)
   useEffect(() => {
     setItems([]); setPage(1); setDone(false); setBusyIds(new Set());
-  }, [mediaType, sort, filters]);
+  }, [mediaType, sort, filters, debouncedQuery]);
 
   useEffect(() => {
     if (done) return;
@@ -46,44 +51,62 @@ export function CatalogScreen() {
 
     (async () => {
       try {
-        const sortOpt = SORT_OPTIONS.find((s) => s.key === sort)!;
-        const params: Record<string, string | number> = {
-          'vote_count.gte': sortOpt.minVotes,
-          page,
-        };
-        if (sort === 'recent') {
-          params.sort_by = mediaType === 'tv' ? 'first_air_date.desc' : 'primary_release_date.desc';
+        let mapped: TmdbSearchResult[] = [];
+
+        if (hasQuery) {
+          // Mode recherche : /search au lieu de /discover — mais on garde le format liste
+          // (les filtres genre/année/note sont ignorés en recherche, TMDB /search ne les accepte pas)
+          const rawResults = await searchTitles(debouncedQuery, mediaType, page);
+          mapped = rawResults.map((r) => ({
+            ...r,
+            media_type: mediaType,
+            title: mediaType === 'movie' ? r.title : r.name,
+            name: r.name,
+            release_date: r.release_date,
+            first_air_date: r.first_air_date,
+          }));
         } else {
-          params.sort_by = sortOpt.sortBy;
+          // Mode découverte : /discover avec tri + filtres
+          const sortOpt = SORT_OPTIONS.find((s) => s.key === sort)!;
+          const params: Record<string, string | number> = {
+            'vote_count.gte': sortOpt.minVotes,
+            page,
+          };
+          if (sort === 'recent') {
+            params.sort_by = mediaType === 'tv' ? 'first_air_date.desc' : 'primary_release_date.desc';
+          } else {
+            params.sort_by = sortOpt.sortBy;
+          }
+
+          // Genres (via genre map)
+          if (filters.genreNames.length > 0) {
+            const map = await getGenreMap(mediaType);
+            const ids = filters.genreNames.map((n) => map.get(n)).filter((id): id is number => typeof id === 'number');
+            if (ids.length > 0) params.with_genres = ids.join(',');
+          }
+          // Année
+          if (filters.yearMin) params[mediaType === 'tv' ? 'first_air_date.gte' : 'primary_release_date.gte'] = `${filters.yearMin}-01-01`;
+          if (filters.yearMax) params[mediaType === 'tv' ? 'first_air_date.lte' : 'primary_release_date.lte'] = `${filters.yearMax}-12-31`;
+          // Note min
+          if (filters.minRating > 0 && sort !== 'top-rated') params['vote_average.gte'] = filters.minRating;
+          // Plateformes
+          if (filters.providerIds.length > 0) {
+            params.with_watch_providers = filters.providerIds.join('|');
+            params.watch_region = db.profile.region;
+          }
+
+          const res = await discoverWithParams(mediaType, params);
+          mapped = res.map((r) => ({
+            ...r,
+            media_type: mediaType,
+            title: mediaType === 'movie' ? r.title : r.name,
+            name: r.name,
+            release_date: r.release_date,
+            first_air_date: r.first_air_date,
+          }));
         }
 
-        // Genres (via genre map)
-        if (filters.genreNames.length > 0) {
-          const map = await getGenreMap(mediaType);
-          const ids = filters.genreNames.map((n) => map.get(n)).filter((id): id is number => typeof id === 'number');
-          if (ids.length > 0) params.with_genres = ids.join(',');
-        }
-        // Année
-        if (filters.yearMin) params[mediaType === 'tv' ? 'first_air_date.gte' : 'primary_release_date.gte'] = `${filters.yearMin}-01-01`;
-        if (filters.yearMax) params[mediaType === 'tv' ? 'first_air_date.lte' : 'primary_release_date.lte'] = `${filters.yearMax}-12-31`;
-        // Note min
-        if (filters.minRating > 0 && sort !== 'top-rated') params['vote_average.gte'] = filters.minRating;
-        // Plateformes
-        if (filters.providerIds.length > 0) {
-          params.with_watch_providers = filters.providerIds.join('|');
-          params.watch_region = db.profile.region;
-        }
-
-        const res = await discoverWithParams(mediaType, params);
         if (cancelled) return;
-        const mapped: TmdbSearchResult[] = res.map((r) => ({
-          ...r,
-          media_type: mediaType,
-          title: mediaType === 'movie' ? r.title : r.name,
-          name: r.name,
-          release_date: r.release_date,
-          first_air_date: r.first_air_date,
-        }));
         setItems((prev) => {
           const seen = new Set(prev.map((r) => r.id));
           const fresh = mapped.filter((r) => !seen.has(r.id));
@@ -98,7 +121,7 @@ export function CatalogScreen() {
     })();
 
     return () => { cancelled = true; };
-  }, [mediaType, page, done, sort, filters, db.profile.region]);
+  }, [mediaType, page, done, sort, filters, db.profile.region, hasQuery, debouncedQuery]);
 
   const seenIds = useMemo(() => {
     const s = new Set<string>();
@@ -160,40 +183,64 @@ export function CatalogScreen() {
           </div>
         </div>
 
-        {/* Bar de tri + bouton filtres */}
-        <div className="px-2 pb-2 flex items-center gap-1 no-scrollbar overflow-x-auto">
-          <div className="flex gap-1 min-w-max">
-            {SORT_OPTIONS.map((s) => {
-              const active = sort === s.key;
-              return (
-                <button
-                  key={s.key}
-                  onClick={() => setSort(s.key)}
-                  className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap border transition ${
-                    active ? 'bg-accent text-black border-accent font-medium' : 'border-border text-muted'
-                  }`}
-                >
-                  {s.label}
-                </button>
-              );
-            })}
-          </div>
-          <div className="flex-1" />
-          <button
-            onClick={() => setFiltersOpen(true)}
-            className={`relative w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 mr-2 ${
-              filtersCount > 0 ? 'bg-accent text-black border-accent' : 'bg-surface border-border text-muted'
-            }`}
-            aria-label="Filtres"
-          >
-            <SlidersHorizontal size={16} />
-            {filtersCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
-                {filtersCount}
-              </span>
+        {/* Barre de recherche */}
+        <div className="px-4 pb-2 flex items-center gap-2">
+          <div className="relative flex-1">
+            <SearchIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+            <input
+              type="search"
+              inputMode="search"
+              enterKeyHint="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={mediaType === 'tv' ? 'Chercher une série…' : 'Chercher un film…'}
+              className="w-full bg-surface border border-border rounded-lg pl-9 pr-9 py-2 text-sm outline-none focus:border-muted"
+            />
+            {query && (
+              <button onClick={() => setQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted p-1" aria-label="Effacer">
+                <X size={14} />
+              </button>
             )}
-          </button>
+          </div>
+          {!hasQuery && (
+            <button
+              onClick={() => setFiltersOpen(true)}
+              className={`relative w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 ${
+                filtersCount > 0 ? 'bg-accent text-black border-accent' : 'bg-surface border-border text-muted'
+              }`}
+              aria-label="Filtres"
+            >
+              <SlidersHorizontal size={16} />
+              {filtersCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                  {filtersCount}
+                </span>
+              )}
+            </button>
+          )}
         </div>
+
+        {/* Bar de tri : masquée pendant une recherche (TMDB /search ne trie pas) */}
+        {!hasQuery && (
+          <div className="px-2 pb-2 no-scrollbar overflow-x-auto">
+            <div className="flex gap-1 min-w-max">
+              {SORT_OPTIONS.map((s) => {
+                const active = sort === s.key;
+                return (
+                  <button
+                    key={s.key}
+                    onClick={() => setSort(s.key)}
+                    className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap border transition ${
+                      active ? 'bg-accent text-black border-accent font-medium' : 'border-border text-muted'
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="px-4 pb-2 text-[11px] text-muted">
           Tap ✓ pour marquer vu. Auto-ajouté à ta biblio.
