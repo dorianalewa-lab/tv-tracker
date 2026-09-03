@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Check, Loader2 } from 'lucide-react';
 import {
   backdropUrl, getMovieDetails, posterUrl, type MovieDetails,
@@ -47,7 +47,7 @@ export function MovieDetailScreen() {
   if (loadError) {
     return (
       <div className="min-h-full pb-24 px-4 pt-4">
-        <BackButton to={item ? '/library' : '/'} />
+        <BackButton />
         <div className="text-red-400 text-sm pt-10 text-center">
           Impossible de charger la fiche : {loadError}
         </div>
@@ -70,7 +70,7 @@ export function MovieDetailScreen() {
           style={{ backgroundImage: backdropUrl(details.backdrop_path) ? `url(${backdropUrl(details.backdrop_path)})` : undefined }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-bg" />
-        <BackButton to={item ? '/library' : '/'} floating />
+        <BackButton floating />
       </div>
 
       <div className="px-4 -mt-16 relative">
@@ -162,10 +162,16 @@ export function MovieDetailScreen() {
   );
 }
 
-function BackButton({ to, floating }: { to: string; floating?: boolean }) {
+function BackButton({ floating }: { floating?: boolean }) {
+  const navigate = useNavigate();
+  // navigate(-1) revient à l'écran précédent en préservant le state (scroll, recherche, etc.)
+  // fallback vers Découvrir si pas d'historique
   return (
-    <Link
-      to={to}
+    <button
+      onClick={() => {
+        if (window.history.length > 1) navigate(-1);
+        else navigate('/');
+      }}
       className={
         floating
           ? 'absolute top-3 left-3 z-10 bg-black/60 backdrop-blur rounded-full p-2 text-white'
@@ -175,7 +181,7 @@ function BackButton({ to, floating }: { to: string; floating?: boolean }) {
     >
       <ArrowLeft size={18} />
       {!floating && 'Retour'}
-    </Link>
+    </button>
   );
 }
 

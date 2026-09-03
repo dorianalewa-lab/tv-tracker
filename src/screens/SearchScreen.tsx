@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search as SearchIcon, X, Loader2, User, SlidersHorizontal, Wand2, ListChecks, Check } from 'lucide-react';
+import { Search as SearchIcon, X, Loader2, User, SlidersHorizontal, ListChecks, Check } from 'lucide-react';
 import {
   searchMulti, searchTitles, searchPersons, profileUrl,
-  getTrending, getUpcomingMovies, getOnAirTv, discoverWithParams,
-  getGenreMap, getPopular, getTopRated, discoverByGenreName,
+  getTrending, discoverWithParams,
+  getGenreMap, getTopRated, discoverByGenreName,
   type MultiSearchItem, type TmdbPerson,
 } from '../api/tmdb';
 import { PosterCard } from '../components/PosterCard';
@@ -52,11 +52,9 @@ export function SearchScreen() {
     setHomeRows({});
     let cancelled = false;
 
-    // Chargement par petits chunks pour éviter d'attendre TOUT avant d'afficher qqch
+    // Rangées simplifiées : tendances + mieux notés + genres (plus de doublons trending/on-air/popular)
     const tasks: { key: string; promise: Promise<TmdbSearchResult[]> }[] = [
       { key: 'trending',   promise: getTrending(mediaType, 'week') },
-      { key: 'secondary',  promise: mediaType === 'movie' ? getUpcomingMovies() : getOnAirTv() },
-      { key: 'popular',    promise: getPopular(mediaType) },
       { key: 'topRated',   promise: getTopRated(mediaType) },
       { key: 'action',     promise: discoverByGenreName(mediaType, 'Action') },
       { key: 'comedy',     promise: discoverByGenreName(mediaType, 'Comédie') },
@@ -248,6 +246,24 @@ export function SearchScreen() {
 
         {showHome && (
           <>
+            {/* CTA catalogue en haut — accès rapide pour cocher sans scroller */}
+            <div className="px-4 mb-4">
+              <Link
+                to={`/catalog/${mediaType}`}
+                className="flex items-center gap-3 p-3 rounded-xl bg-accent/10 border border-accent/40 active:bg-accent/20 transition-colors"
+              >
+                <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-black shrink-0">
+                  <ListChecks size={18} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm">
+                    {mediaType === 'tv' ? 'Toutes les séries' : 'Tous les films'}
+                  </div>
+                  <div className="text-[11px] text-muted">Parcours la liste et coche ce que t'as déjà vu</div>
+                </div>
+              </Link>
+            </div>
+
             {homeLoading && Object.keys(homeRows).length === 0 && (
               <div className="flex items-center gap-2 text-muted text-sm py-6 justify-center">
                 <Loader2 size={16} className="animate-spin" /> Chargement…
@@ -258,16 +274,6 @@ export function SearchScreen() {
               title={mediaType === 'tv' ? '🔥 Séries tendances' : '🔥 Films tendances'}
               items={homeRows.trending ?? []}
               viewAllHref={`/explore/${mediaType === 'tv' ? 'trending-tv' : 'trending-movie'}`}
-            />
-            <TrendingRow
-              title={mediaType === 'tv' ? '📺 En ce moment à la TV' : '🎬 Prochainement au ciné'}
-              items={homeRows.secondary ?? []}
-              viewAllHref={mediaType === 'tv' ? '/explore/onair' : '/explore/upcoming'}
-            />
-            <TrendingRow
-              title={mediaType === 'tv' ? '⭐ Séries populaires' : '⭐ Films populaires'}
-              items={homeRows.popular ?? []}
-              viewAllHref={`/catalog/${mediaType}`}
             />
             <TrendingRow
               title="🏆 Les mieux notés"
@@ -282,26 +288,6 @@ export function SearchScreen() {
               <TrendingRow title="😱 Horreur"     items={homeRows.horror ?? []} />
             )}
             <TrendingRow title="🎥 Documentaires" items={homeRows.doc ?? []} />
-
-            {/* CTA catalogue rapide : rattraper sa biblio en un clin d'œil */}
-            <div className="px-4 mt-4 mb-6">
-              <Link
-                to={`/catalog/${mediaType}`}
-                className="flex items-center gap-3 p-4 rounded-2xl bg-surface border border-border active:bg-border/40 transition-colors"
-              >
-                <div className="w-11 h-11 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center text-accent shrink-0">
-                  <ListChecks size={22} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold">
-                    {mediaType === 'tv' ? 'Toutes les séries' : 'Tous les films'}
-                  </div>
-                  <div className="text-xs text-muted mt-0.5">
-                    Parcours la liste et coche ce que tu as déjà vu
-                  </div>
-                </div>
-              </Link>
-            </div>
           </>
         )}
 
@@ -393,15 +379,6 @@ export function SearchScreen() {
           </div>
         )}
       </div>
-
-      {/* Bouton "Aide-moi" — texte compact pour tenir sur une ligne */}
-      <Link
-        to="/ask"
-        className="fixed left-1/2 -translate-x-1/2 z-30 inline-flex items-center gap-2 px-5 h-11 rounded-full bg-gradient-to-br from-accent to-yellow-500 text-black font-semibold shadow-xl active:scale-95 transition whitespace-nowrap"
-        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 76px)' }}
-      >
-        <Wand2 size={18} /> Aide-moi
-      </Link>
 
       {filtersOpen && (
         <FiltersSheet

@@ -41,10 +41,43 @@ const MONTHS_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 
 export function computeStats(db: DB, period: Period, now = new Date()): Stats {
   const events = db.watchEvents.filter((e) => inPeriod(e.watchedAt, period, now));
   const items = db.items;
+  const allItemsList = Object.values(items);
 
-  const totalEpisodes = events.filter((e) => e.kind === 'episode').length;
-  const totalMovies = events.filter((e) => e.kind === 'movie').length;
-  const totalMinutes = events.reduce((sum, e) => sum + (e.runtime ?? 0), 0);
+  // Comptes basés sur les watch_events (source primaire)
+  const eventEpisodesCount = events.filter((e) => e.kind === 'episode').length;
+  const eventMoviesCount = events.filter((e) => e.kind === 'movie').length;
+  const eventMinutes = events.reduce((sum, e) => sum + (e.runtime ?? 0), 0);
+
+  // Fallback : items completed en période mais sans watch_event associé.
+  // Peut arriver si sync cloud partiel ou données migrées d'une ancienne version.
+  const itemsWithMovieEvent = new Set(
+    events.filter((e) => e.kind === 'movie').map((e) => e.itemId)
+  );
+  const itemsWithEpisodeEvent = new Set(
+    events.filter((e) => e.kind === 'episode').map((e) => e.itemId)
+  );
+  const orphanCompletedMovies = allItemsList.filter(
+    (i) => i.mediaType === 'movie' && i.status === 'completed'
+      && inPeriod(i.updatedAt, period, now)
+      && !itemsWithMovieEvent.has(i.id)
+  );
+  const orphanCompletedShows = allItemsList.filter(
+    (i) => i.mediaType === 'tv' && i.status === 'completed'
+      && inPeriod(i.updatedAt, period, now)
+      && !itemsWithEpisodeEvent.has(i.id)
+  );
+
+  const totalMovies = eventMoviesCount + orphanCompletedMovies.length;
+  const orphanEpisodesEstimate = orphanCompletedShows.reduce(
+    (n, s) => n + (s.totalEpisodes ?? 0), 0
+  );
+  const totalEpisodes = eventEpisodesCount + orphanEpisodesEstimate;
+
+  const orphanMovieMinutes = orphanCompletedMovies.reduce((n, m) => n + (m.runtime ?? 0), 0);
+  const orphanShowMinutes = orphanCompletedShows.reduce(
+    (n, s) => n + ((s.totalEpisodes ?? 0) * (s.runtime ?? 0)), 0
+  );
+  const totalMinutes = eventMinutes + orphanMovieMinutes + orphanShowMinutes;
   const totalHours = Math.round((totalMinutes / 60) * 10) / 10;
 
   // Genres agrégés par heures + count
@@ -99,11 +132,10 @@ export function computeStats(db: DB, period: Period, now = new Date()): Stats {
     null
   );
 
-  const allItems = Object.values(items);
-  const completedShows = allItems.filter((i) => i.status === 'completed' && i.mediaType === 'tv').length;
-  const droppedItems = allItems.filter((i) => i.status === 'dropped').length;
-  const watchingShows = allItems.filter((i) => i.status === 'watching').length;
-  const plannedItems = allItems.filter((i) => i.status === 'planned').length;
+  const completedShows = allItemsList.filter((i) => i.status === 'completed' && i.mediaType === 'tv').length;
+  const droppedItems = allItemsList.filter((i) => i.status === 'dropped').length;
+  const watchingShows = allItemsList.filter((i) => i.status === 'watching').length;
+  const plannedItems = allItemsList.filter((i) => i.status === 'planned').length;
 
   return {
     totalEpisodes,
@@ -118,7 +150,7 @@ export function computeStats(db: DB, period: Period, now = new Date()): Stats {
     watchingShows,
     plannedItems,
     distinctGenres: genres.length,
-    libraryCount: allItems.length,
+    libraryCount: allItemsList.length,
   };
 }
 

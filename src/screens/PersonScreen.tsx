@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Loader2, User } from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, Loader2, User, Check } from 'lucide-react';
 import {
   getPersonCombinedCredits, getPersonDetails, profileUrl,
   type PersonCredit, type PersonDetails,
 } from '../api/tmdb';
 import { PosterCard } from '../components/PosterCard';
 import { useDB } from '../hooks/useLibrary';
+import {
+  ensureItemFromLight, enrichItemInBackground, markAllEpisodesSeen, markMovieSeen,
+  resetTvProgress, unmarkMovieSeen,
+} from '../storage/library';
+import type { TmdbSearchResult } from '../types';
 
 export function PersonScreen() {
   const { id: idParam } = useParams();
@@ -112,6 +117,7 @@ export function PersonScreen() {
               const year = dateStr ? Number(dateStr.slice(0, 4)) : null;
               const owningKey = `${c.media_type}:${c.id}`;
               const owning = owned[owningKey];
+              const isSeen = owning?.status === 'completed';
               return (
                 <div key={owningKey} className="relative">
                   <Link
@@ -130,11 +136,23 @@ export function PersonScreen() {
                       {c.character}
                     </div>
                   )}
-                  {owning && (
-                    <span className="absolute top-1.5 right-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-black/70 text-accent border border-accent/60">
-                      ✓
-                    </span>
-                  )}
+                  {/* Bouton "Vu" en overlay — coche rapide sans ouvrir la fiche */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      void toggleQuickSeen(c, isSeen);
+                    }}
+                    aria-label={isSeen ? 'Marquer non vu' : 'Marquer comme vu'}
+                    className={`absolute top-1.5 right-1.5 h-7 min-w-[34px] px-1.5 rounded-full flex items-center justify-center gap-0.5 text-[10px] font-bold shadow-md transition active:scale-90 ${
+                      isSeen
+                        ? 'bg-emerald-500/90 text-white'
+                        : 'bg-accent text-black'
+                    }`}
+                  >
+                    <Check size={12} strokeWidth={3} />
+                    <span>Vu</span>
+                  </button>
                 </div>
               );
             })}
@@ -146,11 +164,46 @@ export function PersonScreen() {
 }
 
 function BackLink() {
+  const navigate = useNavigate();
   return (
-    <Link to="/" className="inline-flex items-center gap-1 text-muted text-sm">
-      <ArrowLeft size={16} /> Retour recherche
-    </Link>
+    <button
+      onClick={() => navigate(-1)}
+      className="inline-flex items-center gap-1 text-muted text-sm"
+    >
+      <ArrowLeft size={16} /> Retour
+    </button>
   );
+}
+
+/**
+ * Toggle "vu" depuis la filmographie d'un acteur, sans ouvrir la fiche.
+ * Adapte automatiquement film / série et auto-ajoute à la biblio.
+ */
+async function toggleQuickSeen(c: PersonCredit, isSeen: boolean) {
+  const mediaType = c.media_type;
+  const id = `${mediaType}:${c.id}`;
+  if (isSeen) {
+    if (mediaType === 'movie') unmarkMovieSeen(id);
+    else resetTvProgress(id);
+    return;
+  }
+  // Convert PersonCredit → TmdbSearchResult shape pour ensureItemFromLight
+  const light = {
+    id: c.id,
+    media_type: mediaType,
+    title: c.title,
+    name: c.name,
+    poster_path: c.poster_path,
+    release_date: c.release_date,
+    first_air_date: c.first_air_date,
+  } as TmdbSearchResult;
+  const localId = ensureItemFromLight(light, mediaType);
+  if (mediaType === 'movie') {
+    markMovieSeen(localId);
+    void enrichItemInBackground(localId, c.id, 'movie');
+  } else {
+    await markAllEpisodesSeen(localId, c.id);
+  }
 }
 
 function translateDept(dept: string): string {

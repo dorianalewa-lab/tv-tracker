@@ -1,11 +1,10 @@
 import { NavLink } from 'react-router-dom';
-import { Compass, Library, Sparkles, User } from 'lucide-react';
+import { Compass, Library, User } from 'lucide-react';
 
 const tabs = [
-  { to: '/',        label: 'Découvrir', icon: Compass,  end: true },
-  { to: '/library', label: 'Biblio',    icon: Library,  end: false },
-  { to: '/reco',    label: 'Pour toi',  icon: Sparkles, end: false },
-  { to: '/profile', label: 'Profil',    icon: User,     end: false },
+  { to: '/',        label: 'Découvrir', icon: Compass, end: true },
+  { to: '/library', label: 'Biblio',    icon: Library, end: false },
+  { to: '/profile', label: 'Profil',    icon: User,    end: false },
 ] as const;
 
 export function BottomNav() {

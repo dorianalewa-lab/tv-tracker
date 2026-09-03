@@ -1,4 +1,4 @@
-import { Film, Tv, Star, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Film, Tv, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { posterUrl } from '../api/tmdb';
 import type { MediaType, Reaction } from '../types';
 
@@ -7,7 +7,7 @@ type Props = {
   title: string;
   year: number | null;
   mediaType: MediaType;
-  voteAverage?: number | null;   // note TMDB (0..10)
+  voteAverage?: number | null;   // conservé dans l'API mais non affiché
   reaction?: Reaction | null;    // avis perso, badge discret
   saved?: boolean;               // badge "enregistré"
   size?: 'sm' | 'md';
@@ -15,11 +15,10 @@ type Props = {
 };
 
 export function PosterCard({
-  posterPath, title, year, mediaType, voteAverage, reaction, saved,
+  posterPath, title, year, mediaType, reaction, saved,
   size = 'md', onClick,
 }: Props) {
   const src = posterUrl(posterPath, size === 'sm' ? 'w154' : 'w342');
-  const rating = voteAverage && voteAverage > 0 ? voteAverage.toFixed(1) : null;
 
   return (
     <button
@@ -33,12 +32,6 @@ export function PosterCard({
           <div className="w-full h-full flex items-center justify-center text-muted">
             {mediaType === 'tv' ? <Tv size={32} /> : <Film size={32} />}
           </div>
-        )}
-        {rating && (
-          <span className="absolute top-1.5 left-1.5 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-black/75 text-accent text-[10px] font-semibold">
-            <Star size={10} fill="currentColor" strokeWidth={0} />
-            {rating}
-          </span>
         )}
         {saved && (
           <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-accent flex items-center justify-center text-black text-[10px] font-bold">
