@@ -86,9 +86,32 @@ export function computeBadges(db: DB): Badge[] {
   const droppedCount = items.filter((i) => i.status === 'dropped').length;
   const libraryCount = items.length;
   const ratedCount = items.filter((i) => i.rating != null).length;
-  const totalEpisodes = events.filter((e) => e.kind === 'episode').length;
-  const totalMinutes = events.reduce((s, e) => s + (e.runtime ?? 0), 0);
+
+  // FALLBACK : les compteurs "events" sont sous-estimés si le sync cloud a perdu
+  // des watch_events. On complète avec ce qu'on peut déduire des items completed
+  // (même logique que dans stats.ts).
+  const itemsWithMovieEvent = new Set(events.filter((e) => e.kind === 'movie').map((e) => e.itemId));
+  const itemsWithEpisodeEvent = new Set(events.filter((e) => e.kind === 'episode').map((e) => e.itemId));
+  const orphanMoviesCount = items.filter(
+    (i) => i.mediaType === 'movie' && i.status === 'completed' && !itemsWithMovieEvent.has(i.id)
+  ).length;
+  const orphanShowsEpisodes = items
+    .filter((i) => i.mediaType === 'tv' && i.status === 'completed' && !itemsWithEpisodeEvent.has(i.id))
+    .reduce((n, s) => n + (s.totalEpisodes ?? 0), 0);
+  const orphanMoviesMinutes = items
+    .filter((i) => i.mediaType === 'movie' && i.status === 'completed' && !itemsWithMovieEvent.has(i.id))
+    .reduce((n, m) => n + (m.runtime ?? 0), 0);
+  const orphanShowsMinutes = items
+    .filter((i) => i.mediaType === 'tv' && i.status === 'completed' && !itemsWithEpisodeEvent.has(i.id))
+    .reduce((n, s) => n + ((s.totalEpisodes ?? 0) * (s.runtime ?? 0)), 0);
+
+  const totalEpisodes = events.filter((e) => e.kind === 'episode').length + orphanShowsEpisodes;
+  const totalMovieCount = events.filter((e) => e.kind === 'movie').length + orphanMoviesCount;
+  const totalMinutes = events.reduce((s, e) => s + (e.runtime ?? 0), 0) + orphanMoviesMinutes + orphanShowsMinutes;
   const totalHours = totalMinutes / 60;
+  // Signal "au moins un truc coché" : événement OU film/série completed
+  const hasAnyActivity = events.length > 0 || seenMovies > 0 || completedTv > 0;
+  void totalMovieCount;
 
   const b = (
     id: string, label: string, description: string, emoji: string,
@@ -100,7 +123,7 @@ export function computeBadges(db: DB): Badge[] {
 
   return [
     // ---- BRONZE — mise en jambe ----
-    b('first-tap',    'Premier pas',       'Ton tout premier épisode coché.',       '👋', 'bronze', events.length >= 1),
+    b('first-tap',    'Premier pas',       'Ton tout premier épisode coché.',       '👋', 'bronze', hasAnyActivity),
     b('first-movie',  'Ta 1re toile',      'Marque ton premier film comme vu.',      '🍿', 'bronze', seenMovies >= 1),
     b('first-rating', 'Ton premier avis',  'Note un titre.',                         '⭐', 'bronze', ratedCount >= 1),
     b('first-finish', 'Générique final',   'Termine ta première série.',             '🏁', 'bronze', completedTv >= 1),

@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, ArrowRight, Trophy, Settings, Users } from 'lucide-react';
+import { Sparkles, Trophy, Settings, Users } from 'lucide-react';
 import { useDB } from '../hooks/useLibrary';
 import { computeStats, formatHours, PERIOD_LABELS, type Period } from '../lib/stats';
 import { computeBadges, computeLevel, TIER_META, type BadgeTier } from '../lib/badges';
-import { posterUrl } from '../api/tmdb';
 
 const PERIODS: Period[] = ['year', '30d', 'all'];
 
@@ -17,8 +16,6 @@ export function ProfileScreen() {
   const badges = useMemo(() => computeBadges(db), [db]);
   const unlockedBadges = badges.filter((b) => b.unlocked);
 
-  const maxMonthly = Math.max(1, ...stats.monthly.map((m) => m.count));
-  const maxGenreHours = Math.max(0.1, ...stats.genres.map((g) => g.hours));
   const isEmpty = stats.totalEpisodes === 0 && stats.totalMovies === 0;
 
   return (
@@ -122,82 +119,6 @@ export function ProfileScreen() {
           <MiniStat label="Terminées" value={stats.completedShows} />
           <MiniStat label="Lâchées" value={stats.droppedItems} />
         </div>
-
-        {stats.genres.length > 0 && (
-          <section>
-            <h2 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">Top genres</h2>
-            <div className="space-y-2">
-              {stats.genres.slice(0, 6).map((g) => (
-                <div key={g.name}>
-                  <div className="flex items-center justify-between text-sm mb-1">
-                    <span>{g.name}</span>
-                    <span className="text-muted text-xs">{formatHours(g.hours)}</span>
-                  </div>
-                  <div className="h-2 bg-surface rounded-full overflow-hidden">
-                    <div className="h-full bg-accent/80" style={{ width: `${Math.max(4, (g.hours / maxGenreHours) * 100)}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <section>
-          <h2 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">Ton activité (12 derniers mois)</h2>
-          {stats.monthly.every((m) => m.count === 0) ? (
-            <div className="bg-surface border border-border rounded-xl p-6 text-center text-sm text-muted">
-              Aucune activité pour l'instant. Coche des épisodes ou marque des films comme vus pour voir apparaître ta timeline ici.
-            </div>
-          ) : (
-            <>
-              <div className="flex items-end gap-1.5 h-32 bg-surface/40 rounded-lg p-2">
-                {stats.monthly.map((m, i) => {
-                  const isBest = stats.bestMonth?.month === m.month && m.count > 0;
-                  return (
-                    <div key={m.month} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
-                      <div
-                        className={`w-full rounded-t-md transition-all min-h-[3px] ${
-                          m.count === 0 ? 'bg-border/40' : isBest ? 'bg-accent' : 'bg-accent/50'
-                        }`}
-                        style={{ height: `${Math.max(3, (m.count / maxMonthly) * 100)}%` }}
-                        title={`${m.count} événements`}
-                      />
-                      <div className={`text-[10px] ${i % 2 === 0 ? 'text-muted' : 'text-muted/60'}`}>{m.label}</div>
-                    </div>
-                  );
-                })}
-              </div>
-              {stats.bestMonth && stats.bestMonth.count > 0 && (
-                <div className="mt-2 text-xs text-muted">
-                  Mois record : <span className="text-accent font-medium">{stats.bestMonth.label}</span> · {stats.bestMonth.count} épisodes
-                </div>
-              )}
-            </>
-          )}
-        </section>
-
-        {stats.mostBinged && (
-          <section>
-            <h2 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">Ta série obsession</h2>
-            <Link
-              to={stats.mostBinged.item.mediaType === 'tv' ? `/show/${stats.mostBinged.item.tmdbId}` : `/movie/${stats.mostBinged.item.tmdbId}`}
-              className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border"
-            >
-              <div className="w-14 h-20 rounded-md overflow-hidden bg-bg border border-border shrink-0">
-                {posterUrl(stats.mostBinged.item.posterPath, 'w154') && (
-                  <img src={posterUrl(stats.mostBinged.item.posterPath, 'w154')!} alt="" className="w-full h-full object-cover" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-medium truncate">{stats.mostBinged.item.title}</div>
-                <div className="text-xs text-muted">
-                  {stats.mostBinged.count} événement{stats.mostBinged.count > 1 ? 's' : ''} sur la période
-                </div>
-              </div>
-              <ArrowRight size={18} className="text-muted" />
-            </Link>
-          </section>
-        )}
 
         <section>
           <h2 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">
